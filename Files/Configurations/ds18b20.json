@@ -1,0 +1,9 @@
+{
+  "device_file_path": "/sys/bus/w1/devices/28*",
+  "device_name": "w1_slave",
+  "read_attempts": "3",
+  "crc_check": true,
+  "temp_line_token": "t=",
+  "log_file": "ds18b20",
+  "wait_time": 1
+}
