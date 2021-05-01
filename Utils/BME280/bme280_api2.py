@@ -8,7 +8,7 @@ Author: NetcomGroup Innovation Team
 
 # PYTHON IMPORT
 import json
-import bme280
+import BME280
 import smbus2
 
 # AMBIENT IMPORT
@@ -25,7 +25,7 @@ class BME280:
         self.logger = Logger(file_name=self.configs["log_file"])
         try:
             self.bus = smbus2.SMBus(self.configs["port"])
-            bme280.load_calibration_params(self.bus, self.configs["address"])
+            BME280.load_calibration_params(self.bus, self.configs["address"])
         except Exception as e:
             self.bus = None
             self.logger.err("BME280", "Init error: {}".format(e))
@@ -34,7 +34,7 @@ class BME280:
     def get_measurements(self):
         if self:
             try:
-                bme280_data = bme280.sample(self.bus, self.configs["address"])
+                bme280_data = BME280.sample(self.bus, self.configs["address"])
                 measurements = {
                     "humidity": bme280_data.humidity,
                     "pressure": bme280_data.pressure,

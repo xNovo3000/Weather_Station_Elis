@@ -6,7 +6,7 @@ Updated: 12/March/2021 (Covid-19)
 @author: +-- NetcomGroup Innovation Team --+
 '''
 
-import bme280
+import BME280
 import smbus2
 import time
 import Configuration
