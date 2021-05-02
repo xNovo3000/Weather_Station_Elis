@@ -2,7 +2,7 @@
   "anemometer_radius": 9.0,
   "read_interval": 0.5,
   "wind_adjustment": 1.8,
-  "logger": "WSA80422",
+  "logger": "WeatherStation",
   "pooling_rate": 1,
   "wind_gpio_pin": 5,
   "rain_gpio_pin": 6,

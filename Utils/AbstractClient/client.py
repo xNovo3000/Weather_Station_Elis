@@ -1,8 +1,8 @@
 # encoding: UTF-8
 
 """
-Version: 0.2
-Updated: 29/04/2021
+Version: 1.0 Alpha
+Updated: 02/05/2021
 Author: NetcomGroup Innovation Team
 """
 
@@ -16,18 +16,19 @@ from Utils.Logger import get_logger
 import Utils.Configs as Configs
 
 
-# LA NUOVA CLASSE Client
+# LA CLASSE ESTESA DA TUTTI I CLIENT
 class AbstractClient(Thread):
 
+    # INIZIALIZZA LE BASI DEL CLIENT
     def __init__(self, client_name):
         Thread.__init__(self)
         self.client_name = client_name
         self.configurations = Configs.load(client_name)
         self.logger = get_logger(self.configurations["logger"])
-        # client init
+        # carica il client mqtt
         self.client = mqtt.Client()
         self.client.username_pw_set(self.configurations["token"])
-        # client callback functions
+        # carica i callback per le funzioni del client mqtt
         self.client.on_connect = self.__on_connect
         self.client.on_disconnect = self.__on_disconnect
         self.client.on_message = self.__on_message
@@ -74,12 +75,13 @@ class AbstractClient(Thread):
         elif level == mqtt.MQTT_LOG_ERR:
             self.logger.err("MQTT", buf)
 
-    # METODO DA SOVRASCRIVERE
+    # METODO CHIAMATO OGNI [publish_time]
     def publish(self):
         self.logger.warn(self.client_name, "AbstractSensor.read(self) not implemented!")
 
+    # CHIAMATO DA Thread.start(self)
     def run(self):
-        self.logger.warn(self.client_name, "Started client")
+        self.logger.info(self.client_name, "Started client")
         while True:
             begin = time.time()
             self.publish()
@@ -89,6 +91,7 @@ class AbstractClient(Thread):
             else:
                 self.logger.warn(self.client_name, "Publish time is lower of {} seconds".format(end - begin))
 
+    # AL POSTO DI FAR PARTIRE IL THREAD PROVA A CONNETTERSI AL CLIENT MQTT
     def start(self):
         host = self.configurations["host"]
         port = self.configurations["port"]

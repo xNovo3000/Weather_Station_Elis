@@ -1,8 +1,8 @@
 # encoding: UTF-8
 
 """
-Version: 0.2
-Updated: 30/04/2021
+Version: 1.0 Alpha
+Updated: 02/05/2021
 Author: NetcomGroup Innovation Team
 """
 
@@ -16,6 +16,7 @@ import smbus2
 from Utils.AbstractSensor import AbstractSensor
 
 
+# GESTISCE IL SENSORE BME280
 class SensorBME280(AbstractSensor):
 
     def __init__(self):
@@ -23,6 +24,7 @@ class SensorBME280(AbstractSensor):
         self.measurements["humidity"] = 0.0
         self.measurements["pressure"] = 0.0
         self.measurements["ambient_temperature"] = 0.0
+        # prova a caricare il bus del raspberry pi
         try:
             self.bus = smbus2.SMBus(self.configurations["port"])
             BME280.load_calibration_params(self.bus, self.configurations["address"])
@@ -44,4 +46,5 @@ class SensorBME280(AbstractSensor):
             self.logger.info(self.sensor_name, json.dumps(self.measurements))
 
     def __bool__(self):
+        # verifica se il bus è ok
         return AbstractSensor.__bool__(self) and self.bus is not None

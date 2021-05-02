@@ -1,8 +1,8 @@
 # encoding: UTF-8
 
 """
-Version: 0.2
-Updated: 20/04/2021
+Version: 1.0 Alpha
+Updated: 02/05/2021
 Author: NetcomGroup Innovation Team
 """
 
@@ -23,7 +23,7 @@ class Logger:
     }
 
     # INIZIALIZZAZIONE
-    def __init__(self, file_name=None, terminal=True):
+    def __init__(self, file_name=None, terminal=False):
         self.terminal = terminal
         if file_name:
             path = os.path.join(os.path.dirname(__file__), "..", "..", "Files", "Logs")
