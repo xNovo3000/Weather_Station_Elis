@@ -18,3 +18,8 @@ class SimulationClient(AbstractClient):
     def publish(self):
         if self.client.is_connected():
             self.logger.info(self.client_name, "Send data")
+
+
+if __name__ == "__main__":
+    client = SimulationClient()
+    client.start()
