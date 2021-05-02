@@ -1,8 +1,8 @@
 # encoding: UTF-8
 
 """
-Version: 0.3
-Updated: 30/04/2021
+Version: 1.0 Alpha
+Updated: 02/05/2021
 Author: NetcomGroup Innovation Team
 """
 
@@ -15,9 +15,10 @@ import Utils.Configs as Configs
 from Utils.Logger import get_logger
 
 
-# DEVE ESSERE ESTESA DA UN SENSORE
+# LA CLASSE ESTESA DA TUTTI I SENSORI
 class AbstractSensor(Thread):
 
+    # INIZIALIZZA LE BASI DEL SENSORE
     def __init__(self, sensor_name):
         Thread.__init__(self)
         self.is_active = False
@@ -27,11 +28,11 @@ class AbstractSensor(Thread):
         self.configurations = Configs.load(sensor_name)
         self.logger = get_logger(self.configurations["logger"])
 
-    # METODO DA SOVRASCRIVERE
+    # METODO CHIAMATO OGNI [pooling_rate]
     def read(self):
         self.logger.warn(self.sensor_name, "AbstractSensor.read(self) not implemented!")
 
-    # METODO ESEGUITO QUANDO IL THREAD VIENE AVVIATO
+    # CHIAMATO DA Thread.start(self)
     def run(self):
         self.logger.warn(self.sensor_name, "Started sensor")
         while self.is_active:
@@ -49,7 +50,7 @@ class AbstractSensor(Thread):
         self.is_active = True
         Thread.start(self)
 
-    # DISATTIVA IL SENSORE E FA IL JOIN DEL THREAD
+    # DISATTIVA IL SENSORE E FA IL JOIN DEL THREAD DEL SENSORE
     def join(self, timeout=...):
         self.is_active = False
         Thread.join(self)
