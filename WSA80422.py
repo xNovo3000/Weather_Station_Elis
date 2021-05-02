@@ -53,7 +53,6 @@ class WSA80422(AbstractSensor):
         AbstractSensor.__init__(self, "WSA80422")
         self.__adjust_configs()
         # init temporary vars
-        self.rain_bucket_tips = 0
         self.anemometer_spins = 0
         self.wind_speeds = []
         self.wind_directions = []
@@ -89,7 +88,7 @@ class WSA80422(AbstractSensor):
 
     # EVERY TIME THE BUCKET TIPS
     def __bucket_tipped(self):
-        self.rain_bucket_tips += self.configurations["rain_gauge_bucket_size"]
+        self.measurements["rainfall"] += self.configurations["rain_gauge_bucket_size"]
 
     # GET THE WIND SPEED
     def __calculate_wind_speed(self):
@@ -99,7 +98,7 @@ class WSA80422(AbstractSensor):
             circumference_cm = (2 * math.pi) * self.configurations["anemometer_radius"]
             rotations = self.anemometer_spins / 2.0
             dist_km = (circumference_cm * rotations) / cm_in_a_km
-            km_per_sec = dist_km / self.configurations["read_interval"]
+            km_per_sec = dist_km / self.configurations["pooling_rate"]
             km_per_hour = km_per_sec * secs_in_an_hour
             self.anemometer_spins = 0
             return km_per_hour * self.configurations["wind_adjustment"]
@@ -118,32 +117,30 @@ class WSA80422(AbstractSensor):
 
     def read(self):
         if self:
+            self.measurements_mutex.acquire()  # lock guard
             # get async measurements
             wind_speed = self.__calculate_wind_speed()
             wind_direction = self.__calculate_wind_direction()
-            # log read measurements
-            self.logger.info(self.sensor_name, json.dumps(self.measurements))
             # append to the existing ones
-            self.measurements_mutex.acquire()
             self.wind_speeds.append(wind_speed)
             self.wind_directions.append(wind_direction)
-            self.measurements_mutex.release()
+            self.measurements_mutex.release()  # unlock guard
+            # log the measurements
 
     def get_measurements(self):
         # calculate from temp data and clear them
         self.measurements_mutex.acquire()  # lock guard
         if len(self.wind_directions) > 0:
             self.measurements["wind_direction_average"] = average(self.wind_directions)
-        if len(self.wind_speeds) > 0:  # calculate from temp data
+        if len(self.wind_speeds) > 0:
             self.measurements["wind_gust"] = max(self.wind_speeds)
             self.measurements["wind_speed_mean"] = statistics.mean(self.wind_speeds)
         self.wind_speeds.clear()
         self.wind_directions.clear()
         self.measurements_mutex.release()  # unlock guard
-        # calculate rainfall and clear
-        self.measurements["rainfall"] = self.rain_bucket_tips
-        self.rain_bucket_tips = 0
-        # return data
+        # log data
+        self.logger.info(self.sensor_name, json.dumps(self.measurements))
+        # return the data
         return AbstractSensor.get_measurements(self)
 
     def __bool__(self):

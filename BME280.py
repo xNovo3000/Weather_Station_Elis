@@ -16,7 +16,7 @@ import smbus2
 from Utils.AbstractSensor import AbstractSensor
 
 
-class BME280(AbstractSensor):
+class SensorBME280(AbstractSensor):
 
     def __init__(self):
         AbstractSensor.__init__(self, "BME280")
@@ -40,7 +40,7 @@ class BME280(AbstractSensor):
             self.measurements["pressure"] = bme280_data.pressure
             self.measurements["ambient_temperature"] = bme280_data.temperature
             self.measurements_mutex.release()
-            # logga
+            # logga le misurazioni appena ottenute
             self.logger.info(self.sensor_name, json.dumps(self.measurements))
 
     def __bool__(self):

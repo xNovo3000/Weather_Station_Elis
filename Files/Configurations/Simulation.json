@@ -3,8 +3,8 @@
   "port": 1883,
   "token": "sTDQN6xTkw5i4pstfcBi",
   "keep_alive": 60,
+  "publish_time": 2,
   "qos": 1,
-  "publish_time": 3,
   "subscribe_path": "v1/devices/me/attributes/response/+",
-  "log_file": "mqtt_client"
+  "logger": "Simulation"
 }
