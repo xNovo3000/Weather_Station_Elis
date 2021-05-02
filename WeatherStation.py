@@ -8,7 +8,7 @@ Author: NetcomGroup Innovation Team
 
 # AMBIENT IMPORT
 from Utils.AbstractClient import AbstractClient
-from BME280 import BME280
+from BME280 import SensorBME280
 from DS18B20 import DS18B20
 from WSA80422 import WSA80422
 
@@ -18,7 +18,7 @@ class WeatherStationClient(AbstractClient):
     def __init__(self):
         AbstractClient.__init__(self, "WeatherStation")
         # declare sensors
-        self.bme280 = BME280()
+        self.bme280 = SensorBME280()
         self.ds18b20 = DS18B20()
         self.wsa80422 = WSA80422()
 
@@ -29,7 +29,7 @@ class WeatherStationClient(AbstractClient):
             measuraments.update(self.ds18b20.get_measurements())
             measuraments.update(self.bme280.get_measurements())
             measuraments.update(self.wsa80422.get_measurements())
-            # TODO: self.client.publish('v1/devices/me/telemetry', json_measuraments, self.configurations["qos"])
+            # self.client.publish(self.configurations["topic"], json.dumps(measurements), self.configurations["qos"])
 
     # RUN SENSORS WHEN CONNECTED
     def run(self):

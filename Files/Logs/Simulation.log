@@ -1,0 +1,16 @@
+2021/05/02 17:33:52 - [INFO] Simulation: Tentativo di connessione a iothings.netcomgroup.eu:1883
+2021/05/02 17:33:52 - [INFO] MQTT: Sending CONNECT (u1, p0, wr0, wq0, wf0, c1, k60) client_id=b''
+2021/05/02 17:33:53 - [INFO] MQTT: Received CONNACK (1, 0)
+2021/05/02 17:33:53 - [INFO] MQTT Client: Connesso a iothings.netcomgroup.eu:1883
+2021/05/02 17:33:53 - [INFO] MQTT: Sending SUBSCRIBE (d0, m1) [(b'v1/devices/me/attributes/response/+', 1)]
+2021/05/02 17:33:53 - [WARN] Simulation: Started client
+2021/05/02 17:33:53 - [INFO] Simulation: Send data
+2021/05/02 17:33:53 - [INFO] MQTT: Received SUBACK
+2021/05/02 17:33:53 - [INFO] MQTT: Mid: 1. QoS garantiti: (1,)
+2021/05/02 17:33:55 - [INFO] Simulation: Send data
+2021/05/02 17:33:57 - [INFO] Simulation: Send data
+2021/05/02 17:33:59 - [INFO] Simulation: Send data
+2021/05/02 17:34:01 - [INFO] Simulation: Send data
+2021/05/02 17:34:03 - [INFO] Simulation: Send data
+2021/05/02 17:34:05 - [INFO] Simulation: Send data
+2021/05/02 17:34:07 - [INFO] Simulation: Send data

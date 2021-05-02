@@ -44,7 +44,8 @@ class AbstractClient(Thread):
             # imposta la path di invio
             client.subscribe('v1/devices/me/attributes/response/+', self.configurations["qos"])
             # avvia il thread di invio dati
-            Thread.start(self)
+            if not self.is_alive():
+                Thread.start(self)
         else:  # errore nella connessione
             self.logger.err("MQTT", "Connessione fallita. Codice errore: {}".format(rc))
 
