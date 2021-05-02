@@ -8,7 +8,7 @@ Author: NetcomGroup Innovation Team
 
 from .logger import Logger
 
-loggers: dict[str, Logger] = {}
+loggers = {}
 
 
 def get_logger(name):
