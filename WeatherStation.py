@@ -26,12 +26,12 @@ class WeatherStationClient(AbstractClient):
 
     # PUBLISH
     def publish(self):
+        # ottieni le misurazioni
+        measuraments = {}
+        measuraments.update(self.ds18b20.get_measurements())
+        measuraments.update(self.bme280.get_measurements())
+        measuraments.update(self.wsa80422.get_measurements())
         if self.client.is_connected():
-            # ottieni le misurazioni
-            measuraments = {}
-            measuraments.update(self.ds18b20.get_measurements())
-            measuraments.update(self.bme280.get_measurements())
-            measuraments.update(self.wsa80422.get_measurements())
             # crea una variabile c
             json_measuremets = json.dumps(measuraments)
             # send to thingsboard
