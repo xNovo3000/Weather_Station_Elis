@@ -6,4 +6,4 @@ Updated: 02/05/2021
 Author: NetcomGroup Innovation Team
 """
 
-from .configs import load
+from .client import AbstractClient

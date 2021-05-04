@@ -4,6 +4,7 @@
   "read_attempts": "3",
   "crc_check": true,
   "temp_line_token": "t=",
-  "log_file": "ds18b20",
-  "wait_time": 1
+  "logger": "WeatherStation",
+  "wait_time": 1,
+  "pooling_rate": 5.0
 }
