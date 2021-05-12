@@ -8,8 +8,7 @@ Author: NetcomGroup Innovation Team
 
 # PYTHON IMPORT
 import json
-import time
-import BME280
+import bme280
 import smbus2
 
 # AMBIENT IMPORT
@@ -17,7 +16,7 @@ from Utils.AbstractSensor import AbstractSensor
 
 
 # GESTISCE IL SENSORE BME280
-class SensorBME280(AbstractSensor):
+class BME280(AbstractSensor):
 
     def __init__(self):
         AbstractSensor.__init__(self, "BME280")
@@ -27,15 +26,17 @@ class SensorBME280(AbstractSensor):
         # prova a caricare il bus del raspberry pi
         try:
             self.bus = smbus2.SMBus(self.configurations["port"])
-            BME280.load_calibration_params(self.bus, self.configurations["address"])
+            bme280.load_calibration_params(self.bus, self.configurations["address"])
         except Exception as e:
             self.bus = None
             self.logger.err(self.sensor_name, "Init error: {}".format(e))
+        if self:
+            self.logger.warn(self.sensor_name, "{} started with success".format(self.sensor_name))
 
     def read(self):
         if self:  # verifica se il senore è ok
             # ottieni le misurazioni
-            bme280_data = BME280.sample(self.bus, self.configurations["address"])
+            bme280_data = bme280.sample(self.bus, self.configurations["address"])
             # salva bloccando le operazioni concorrenti
             self.measurements_mutex.acquire()
             self.measurements["humidity"] = bme280_data.humidity
