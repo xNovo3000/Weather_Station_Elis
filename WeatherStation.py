@@ -35,7 +35,7 @@ class WeatherStationClient(AbstractClient):
             # crea una variabile c
             json_measuremets = json.dumps(measuraments)
             # send to thingsboard
-            # self.client.publish(self.configurations["topic"], json_measuremets, self.configurations["qos"])
+            self.client.publish(self.configurations["topic"], json_measuremets, self.configurations["qos"])
             # log
             self.logger.info(self.client_name, json_measuremets)
 
