@@ -82,6 +82,7 @@ class AbstractClient(Thread):
     # CHIAMATO DA Thread.start(self)
     def run(self):
         self.logger.info(self.client_name, "Started client")
+        time.sleep(self.configurations["publish_time"])
         while True:
             begin = time.time()
             self.publish()
