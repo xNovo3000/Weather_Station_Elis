@@ -36,7 +36,10 @@ class DS18B20(AbstractSensor):
         return lines
     
     def __crc_check(self, lines):
-        return lines[0].strip()[-3:] == self.configurations["crc_check"]
+        crc_check = "NO"
+        if self.configurations["crc_check"]:
+            crc_check = "YES"
+        return lines[0].strip()[-3:] == crc_check
         
     def read(self):
         if self:
