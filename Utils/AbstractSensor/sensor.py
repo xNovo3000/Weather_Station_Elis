@@ -62,6 +62,10 @@ class AbstractSensor(Thread):
         self.measurements_mutex.release()
         return measurements
 
-    # VERIFICA SE IL SENSORE E' OK O NO
-    def __bool__(self):
+    # VEDE SE IL SENSORE E' ATTIVO
+    def is_active(self):
         return self.is_active
+
+    # SEMPRE FALSO, NECESSITA LA SOVRASCRITTURA
+    def __bool__(self):
+        return False

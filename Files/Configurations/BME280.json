@@ -1,6 +1,6 @@
 {
   "port": 1,
-  "address": 119,
+  "address": 118,
   "logger": "WeatherStation",
   "pooling_rate": 5.0
 }

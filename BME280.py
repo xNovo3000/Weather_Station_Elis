@@ -30,8 +30,6 @@ class BME280(AbstractSensor):
         except Exception as e:
             self.bus = None
             self.logger.err(self.sensor_name, "Init error: {}".format(e))
-        if self:
-            self.logger.warn(self.sensor_name, "{} started with success".format(self.sensor_name))
 
     def read(self):
         if self:  # verifica se il senore è ok
@@ -48,4 +46,4 @@ class BME280(AbstractSensor):
 
     def __bool__(self):
         # verifica se il bus è ok
-        return AbstractSensor.__bool__(self) and self.bus is not None
+        return self.bus is not None
