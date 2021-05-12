@@ -10,7 +10,7 @@ Author: NetcomGroup Innovation Team
 import json
 
 from Utils.AbstractClient import AbstractClient
-from BME280 import SensorBME280
+from BME280 import BME280
 from DS18B20 import DS18B20
 from WSA80422 import WSA80422
 
@@ -20,7 +20,7 @@ class WeatherStationClient(AbstractClient):
     def __init__(self):
         AbstractClient.__init__(self, "WeatherStation")
         # carica i sensori
-        self.bme280 = SensorBME280()
+        self.bme280 = BME280()
         self.ds18b20 = DS18B20()
         self.wsa80422 = WSA80422()
 

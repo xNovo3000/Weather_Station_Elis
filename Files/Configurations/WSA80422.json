@@ -1,9 +1,8 @@
 {
   "anemometer_radius": 9.0,
-  "read_interval": 0.5,
   "wind_adjustment": 1.8,
   "logger": "WeatherStation",
-  "pooling_rate": 1,
+  "pooling_rate": 1.0,
   "wind_gpio_pin": 5,
   "rain_gpio_pin": 6,
   "rain_gauge_bucket_size": 0.2794,

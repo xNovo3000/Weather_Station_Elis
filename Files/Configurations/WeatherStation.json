@@ -2,8 +2,8 @@
   "host": "iothings.netcomgroup.eu",
   "port": 1883,
   "token": "sTDQN6xTkw5i4pstfcBi",
-  "keep_alive": 60,
-  "publish_time": 60,
+  "keep_alive": 20,
+  "publish_time": 20,
   "qos": 1,
   "subscribe_path": "v1/devices/me/attributes/response/+",
   "logger": "WeatherStation"

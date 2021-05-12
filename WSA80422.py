@@ -81,6 +81,8 @@ class WSA80422(AbstractSensor):
         except Exception as e:
             self.rain_sensor_switch_reed = None
             self.logger.err(self.sensor_name, "Rain sensor init error {}".format(e))
+        if self:
+            self.logger.warn(self.sensor_name, "{} started with success".format(self.sensor_name))
 
     # EVERY HALF ROTATION, ADD 1 TO THE COUNT
     def __spin(self):

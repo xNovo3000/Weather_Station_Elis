@@ -28,6 +28,8 @@ class DS18B20(AbstractSensor):
         except Exception as e:
             self.logger.err(self.sensor_name, "Error loading device. {}".format(e))
             self.device_file = None
+        if self:
+            self.logger.warn(self.sensor_name, "{} started with success".format(self.sensor_name))
     
     def __read_temp_raw(self):
         f = open(self.device_file, "r")
