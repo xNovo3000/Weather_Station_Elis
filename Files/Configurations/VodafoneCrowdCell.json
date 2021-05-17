@@ -1,0 +1,6 @@
+{
+  "pooling_rate": 1,
+  "logger": "Vodafone",
+  "access_key": "<access_key>",
+  "secret_key": "<secret_key>"
+}
