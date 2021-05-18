@@ -1,7 +1,11 @@
 # Weather Station
 
 - NB: scrivere qui un resoconto di tutte le modifiche
-  
+
+### 18 Maggio 2021
+- Gestore dei dati dalla crowd cell terminato
+- TODO: creare server fasullo per testarne il corretto funzionamento
+
 ### 17 Maggio 2021
 - Inizio dei lavori sul branch Vodafone
 

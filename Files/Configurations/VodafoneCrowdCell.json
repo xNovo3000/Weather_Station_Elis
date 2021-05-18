@@ -1,5 +1,6 @@
 {
-  "pooling_rate": 1,
+  "base_url": "https://api.analytics.vodafone.it/api/",
+  "pooling_rate": 15,
   "logger": "Vodafone",
   "access_key": "<access_key>",
   "secret_key": "<secret_key>"
