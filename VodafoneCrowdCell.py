@@ -206,8 +206,10 @@ class VodafoneCrowdCell(AbstractSensor):
         }
         # sblocca la guardia
         self.measurements_mutex.release()
+        # avvisa che le misurazioni sono state ottenute correttamente
+        self.logger.info(self.sensor_name, "Got measurements correctly")
+        # reimposta i dati
+        self.__reset_data()
 
-
-# stub main
-if __name__ == "__main__":
-    VodafoneCrowdCell().start()
+    def __bool__(self):
+        return True

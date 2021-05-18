@@ -1,6 +1,6 @@
 {
-  "base_url": "https://api.analytics.vodafone.it/api/",
-  "pooling_rate": 15,
+  "base_url": "http://12b0pwc3j42gg9ee.myfritz.net:25405/api/",
+  "pooling_rate": 10,
   "logger": "Vodafone",
   "access_key": "<access_key>",
   "secret_key": "<secret_key>"
