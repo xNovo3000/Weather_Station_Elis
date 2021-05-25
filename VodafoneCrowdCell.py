@@ -24,6 +24,7 @@ class VodafoneCrowdCell(AbstractSensor):
 
     def __init__(self):
         AbstractSensor.__init__(self, "VodafoneCrowdCell")
+        self.real_pooling_rate = self.configurations["pooling_rate"]
         self.__reset_data()
 
     def __reset_data(self):
@@ -60,7 +61,7 @@ class VodafoneCrowdCell(AbstractSensor):
             return
         # verifica che la risposta sia ok
         if not response_json["status"] or response_json["responseStatus"] != 200:  # non ok
-            # TODO: FARE LA PROSSIMA RICHESTA MOLTO PRIMA DEL SOLITO
+            self.configurations["pooling_rate"] = 60  # prossima richesta tra 60 secondi per sicurezza
             self.logger.err(self.sensor_name, "Response status: {}".format(response_json["responseStatus"]))
             self.logger.err(self.sensor_name, "Message: {}".format(response_json["message"]))
             return
@@ -105,7 +106,7 @@ class VodafoneCrowdCell(AbstractSensor):
                 return
             # verifica che la risposta sia ok
             if not response_json["status"] or response_json["responseStatus"] != 200:  # non ok
-                # TODO: FARE LA PROSSIMA RICHESTA MOLTO PRIMA DEL SOLITO
+                self.configurations["pooling_rate"] = 60  # prossima richesta tra 60 secondi per sicurezza
                 self.logger.err(self.sensor_name, "Response status: {}".format(response_json["responseStatus"]))
                 self.logger.err(self.sensor_name, "Message: {}".format(response_json["message"]))
                 return
@@ -135,8 +136,10 @@ class VodafoneCrowdCell(AbstractSensor):
                     self.eta_media += 50 * val["visitors"]
                 elif val["age"] == "55-65":
                     self.eta_media += 60 * val["visitors"]
-                else:  # TODO: gestire quando viene ritornato null
+                elif val["age"] == ">65":
                     self.eta_media += 70 * val["visitors"]
+                else:
+                    self.eta_media += 35 * val["visitors"]  # inserimento di un valore intermedio
                 # calcola distanza dal luogo di casa
                 if val["homeDistance"] == "000-010":
                     self.distanza_casa_media += 5 * val["visitors"]
@@ -148,8 +151,10 @@ class VodafoneCrowdCell(AbstractSensor):
                     self.distanza_casa_media += 35 * val["visitors"]
                 elif val["homeDistance"] == "040-050":
                     self.distanza_casa_media += 45 * val["visitors"]
-                else:  # TODO: gestire quando viene ritornato null
+                elif val["homeDistance"] == "50+":
                     self.distanza_casa_media += 55 * val["visitors"]
+                else:
+                    self.distanza_casa_media += 30 * val["visitors"]  # inserimento di un valore intermedio
                 # calcola distanza dal luogo di lavoro
                 if val["workDistance"] == "000-010":
                     self.distanza_lavoro_media += 5 * val["visitors"]
@@ -161,8 +166,10 @@ class VodafoneCrowdCell(AbstractSensor):
                     self.distanza_lavoro_media += 35 * val["visitors"]
                 elif val["workDistance"] == "040-050":
                     self.distanza_lavoro_media += 45 * val["visitors"]
-                else:  # TODO: gestire quando viene ritornato null
+                elif val["workDistance"] == "50+":
                     self.distanza_lavoro_media += 55 * val["visitors"]
+                else:
+                    self.distanza_lavoro_media += 30 * val["visitors"]  # inserimento di un valore intermedio
             actual_page += 1
         # calcola la media complessiva
         self.eta_media /= (self.visitatori_italiani + self.visitatori_stranieri)
@@ -185,6 +192,8 @@ class VodafoneCrowdCell(AbstractSensor):
         self.measurements_mutex.release()
         # avvisa che le misurazioni sono state ottenute correttamente
         self.logger.info(self.sensor_name, "Got measurements correctly")
+        # reimposta il pooling_rate
+        self.configurations["pooling_rate"] = self.real_pooling_rate
         # reimposta i dati
         self.__reset_data()
 

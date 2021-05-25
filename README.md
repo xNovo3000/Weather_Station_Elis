@@ -3,6 +3,9 @@
 - NB: scrivere qui un resoconto di tutte le modifiche
 
 ### 25 Maggio 2021
+- Aggiunto l'autorun da 'iniettare' su systemd
+- Null checks per la Crowd Cell
+- Se la richiesta fallisce, la prossima avverrà dopo 60 secondi
 - Aggiunto il logger per Vodafone
 - Modifica ai dati da inviare a Thingsboard
 - Creato il server fake in attesa dei dati da Vodafone
@@ -15,7 +18,7 @@
 - TODO: creare server fasullo per testarne il corretto funzionamento
 
 ### 17 Maggio 2021
-- Inizio dei lavori sul branch Vodafone
+- Inizio dei lavori sul branch 'vodafone'
 
 ### 12 Maggio 2021
 - Il 'master' adesso ha il codice multithread
