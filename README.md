@@ -9,6 +9,7 @@
 - Aggiunto il logger per Vodafone
 - Modifica ai dati da inviare a Thingsboard
 - Creato il server fake in attesa dei dati da Vodafone
+- Aggiunto l'autorun per la Weather Station
 - Migliorato il sistema di logging sotto la scocca
 - Il logger adesso ha il suo file di configurazione
 - Il logger non fa più richeste bloccanti
