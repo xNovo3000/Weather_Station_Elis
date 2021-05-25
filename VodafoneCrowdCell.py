@@ -27,26 +27,14 @@ class VodafoneCrowdCell(AbstractSensor):
         self.__reset_data()
 
     def __reset_data(self):
-        self.visitatori_unici = 0
         self.visitatori_italiani = 0
         self.visitatori_stranieri = 0
-        self.distanza_lavoro_0_10 = 0
-        self.distanza_lavoro_10_20 = 0
-        self.distanza_lavoro_20_30 = 0
-        self.distanza_lavoro_30_40 = 0
-        self.distanza_lavoro_40_50 = 0
-        self.distanza_lavoro_50_plus = 0
-        self.distanza_casa_0_10 = 0
-        self.distanza_casa_10_20 = 0
-        self.distanza_casa_20_30 = 0
-        self.distanza_casa_30_40 = 0
-        self.distanza_casa_40_50 = 0
-        self.distanza_casa_50_plus = 0
         self.transiti = 0
-        self.tempo_permanenza_medio = 0
         self.maschi = 0
         self.femmine = 0
         self.eta_media = 0
+        self.distanza_lavoro_media = 0
+        self.distanza_casa_media = 0
 
     def read(self):
         # FASE 1: LOGIN
@@ -99,7 +87,7 @@ class VodafoneCrowdCell(AbstractSensor):
                         "page": actual_page,
                         "dimensionsList": [
                             "gender", "age", "nationality", "workDistance", "homeDistance", "visits",
-                            "visitors", "totalDwellTime"
+                            "visitors"
                         ]
                     }
                 )
@@ -122,87 +110,76 @@ class VodafoneCrowdCell(AbstractSensor):
                 self.logger.err(self.sensor_name, "Message: {}".format(response_json["message"]))
                 return
             total_pages = response_json["pages"]
+            # per ogni 'oggetto ritornato'
             for val in response_json["data"]:
                 # calcola variabili semplici
-                self.visitatori_unici += val["visitors"]
                 self.transiti += val["visits"]
-                self.tempo_permanenza_medio += val["totalDwellTime"]
                 # calcola se ita o stranieri
                 if val["nationality"] == "ITALIANS":
                     self.visitatori_italiani += val["visitors"]
                 else:
                     self.visitatori_stranieri += val["visitors"]
                 # calcola sesso
-                if val["gender"] == 'M':
+                if val["gender"] == "M":
                     self.maschi += val["visitors"]
                 else:
                     self.femmine += val["visitors"]
                 # calcola eta media
                 if val["age"] == "15-25":
-                    self.eta_media += 20
+                    self.eta_media += 20 * val["visitors"]
                 elif val["age"] == "25-35":
-                    self.eta_media += 30
+                    self.eta_media += 30 * val["visitors"]
                 elif val["age"] == "35-45":
-                    self.eta_media += 40
+                    self.eta_media += 40 * val["visitors"]
                 elif val["age"] == "45-55":
-                    self.eta_media += 50
+                    self.eta_media += 50 * val["visitors"]
                 elif val["age"] == "55-65":
-                    self.eta_media += 60
-                else:
-                    self.eta_media += 70
+                    self.eta_media += 60 * val["visitors"]
+                else:  # TODO: gestire quando viene ritornato null
+                    self.eta_media += 70 * val["visitors"]
                 # calcola distanza dal luogo di casa
                 if val["homeDistance"] == "000-010":
-                    self.distanza_casa_0_10 += val["visitors"]
+                    self.distanza_casa_media += 5 * val["visitors"]
                 elif val["homeDistance"] == "010-020":
-                    self.distanza_casa_10_20 += val["visitors"]
+                    self.distanza_casa_media += 15 * val["visitors"]
                 elif val["homeDistance"] == "020-030":
-                    self.distanza_casa_20_30 += val["visitors"]
+                    self.distanza_casa_media += 25 * val["visitors"]
                 elif val["homeDistance"] == "030-040":
-                    self.distanza_casa_30_40 += val["visitors"]
+                    self.distanza_casa_media += 35 * val["visitors"]
                 elif val["homeDistance"] == "040-050":
-                    self.distanza_casa_40_50 += val["visitors"]
-                else:
-                    self.distanza_casa_50_plus += val["visitors"]
+                    self.distanza_casa_media += 45 * val["visitors"]
+                else:  # TODO: gestire quando viene ritornato null
+                    self.distanza_casa_media += 55 * val["visitors"]
                 # calcola distanza dal luogo di lavoro
                 if val["workDistance"] == "000-010":
-                    self.distanza_lavoro_0_10 += val["visitors"]
+                    self.distanza_lavoro_media += 5 * val["visitors"]
                 elif val["workDistance"] == "010-020":
-                    self.distanza_lavoro_10_20 += val["visitors"]
+                    self.distanza_lavoro_media += 15 * val["visitors"]
                 elif val["workDistance"] == "020-030":
-                    self.distanza_lavoro_20_30 += val["visitors"]
+                    self.distanza_lavoro_media += 25 * val["visitors"]
                 elif val["workDistance"] == "030-040":
-                    self.distanza_lavoro_30_40 += val["visitors"]
+                    self.distanza_lavoro_media += 35 * val["visitors"]
                 elif val["workDistance"] == "040-050":
-                    self.distanza_lavoro_40_50 += val["visitors"]
-                else:
-                    self.distanza_lavoro_50_plus += val["visitors"]
+                    self.distanza_lavoro_media += 45 * val["visitors"]
+                else:  # TODO: gestire quando viene ritornato null
+                    self.distanza_lavoro_media += 55 * val["visitors"]
             actual_page += 1
-        self.tempo_permanenza_medio /= self.visitatori_unici
-        self.eta_media /= self.visitatori_unici
+        # calcola la media complessiva
+        self.eta_media /= (self.visitatori_italiani + self.visitatori_stranieri)
+        self.distanza_lavoro_media /= (self.visitatori_italiani + self.visitatori_stranieri)
+        self.distanza_casa_media /= (self.visitatori_italiani + self.visitatori_stranieri)
         # blocca la guardia
         self.measurements_mutex.acquire()
         # aggiorna le misurazioni
         self.measurements = {
-            "visitatori_unici": self.visitatori_unici,
             "visitatori_italiani": self.visitatori_italiani,
             "visitatori_stranieri": self.visitatori_stranieri,
-            "distanza_lavoro_0_10": self.distanza_lavoro_0_10,
-            "distanza_lavoro_10_20": self.distanza_lavoro_10_20,
-            "distanza_lavoro_20_30": self.distanza_lavoro_20_30,
-            "distanza_lavoro_30_40": self.distanza_lavoro_30_40,
-            "distanza_lavoro_40_50": self.distanza_lavoro_40_50,
-            "distanza_lavoro_50_plus": self.distanza_lavoro_50_plus,
-            "distanza_casa_0_10": self.distanza_casa_0_10,
-            "distanza_casa_10_20": self.distanza_casa_10_20,
-            "distanza_casa_20_30": self.distanza_casa_20_30,
-            "distanza_casa_30_40": self.distanza_casa_30_40,
-            "distanza_casa_40_50": self.distanza_casa_40_50,
-            "distanza_casa_50_plus": self.distanza_casa_50_plus,
             "transiti": self.transiti,
-            "tempo_permanenza_medio": self.tempo_permanenza_medio,
             "maschi": self.maschi,
             "femmine": self.femmine,
-            "eta_media": self.eta_media
+            "eta_media": self.eta_media,
+            "distanza_lavoro_media": self.distanza_lavoro_media,
+            "distanza_casa_media": self.distanza_casa_media
         }
         # sblocca la guardia
         self.measurements_mutex.release()

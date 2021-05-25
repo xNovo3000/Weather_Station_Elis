@@ -2,6 +2,10 @@
 
 - NB: scrivere qui un resoconto di tutte le modifiche
 
+### 25 Maggio 2021
+- Modifica ai dati da inviare a Thingsboard
+- Creato il server fake in attesa dei dati da Vodafone
+
 ### 18 Maggio 2021
 - Gestore dei dati dalla crowd cell terminato
 - TODO: creare server fasullo per testarne il corretto funzionamento
