@@ -1,7 +1,7 @@
 {
   "anemometer_radius": 9.0,
   "wind_adjustment": 1.8,
-  "logger": "WeatherStation",
+  "logger": "WeatherStationLogger",
   "pooling_rate": 1.0,
   "wind_gpio_pin": 5,
   "rain_gpio_pin": 6,

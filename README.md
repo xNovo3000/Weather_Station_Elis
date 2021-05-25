@@ -5,6 +5,9 @@
 ### 25 Maggio 2021
 - Modifica ai dati da inviare a Thingsboard
 - Creato il server fake in attesa dei dati da Vodafone
+- Migliorato il sistema di logging sotto la scocca
+- Il logger adesso ha il suo file di configurazione
+- Il logger non fa più richeste bloccanti
 
 ### 18 Maggio 2021
 - Gestore dei dati dalla crowd cell terminato
