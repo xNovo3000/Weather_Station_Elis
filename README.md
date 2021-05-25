@@ -3,6 +3,7 @@
 - NB: scrivere qui un resoconto di tutte le modifiche
 
 ### 25 Maggio 2021
+- Aggiunto il logger per Vodafone
 - Modifica ai dati da inviare a Thingsboard
 - Creato il server fake in attesa dei dati da Vodafone
 - Migliorato il sistema di logging sotto la scocca

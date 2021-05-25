@@ -7,5 +7,5 @@
   "publish_time": 10,
   "qos": 1,
   "subscribe_path": "v1/devices/me/attributes/response/+",
-  "logger": "Vodafone"
+  "logger": "VodafoneLogger"
 }
