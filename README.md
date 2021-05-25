@@ -3,6 +3,7 @@
 - NB: scrivere qui un resoconto di tutte le modifiche
 
 ### 25 Maggio 2021
+- Aggiunto l'autorun per la Weather Station
 - Migliorato il sistema di logging sotto la scocca
 - Il logger adesso ha il suo file di configurazione
 - Il logger non fa più richeste bloccanti
