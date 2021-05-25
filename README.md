@@ -1,7 +1,12 @@
 # Weather Station
 
 - NB: scrivere qui un resoconto di tutte le modifiche
-  
+
+### 25 Maggio 2021
+- Migliorato il sistema di logging sotto la scocca
+- Il logger adesso ha il suo file di configurazione
+- Il logger non fa più richeste bloccanti
+
 ### 12 Maggio 2021
 - Il 'master' adesso ha il codice multithread
 - Testato direttamente sulla Weather Station

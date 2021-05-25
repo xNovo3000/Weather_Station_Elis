@@ -13,5 +13,6 @@ loggers = {}
 
 def get_logger(name):
     if name not in loggers:
-        loggers[name] = Logger(file_name=name)
+        loggers[name] = Logger(name=name)
+        loggers[name].start()
     return loggers[name]
