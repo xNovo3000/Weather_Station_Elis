@@ -1,5 +1,12 @@
 {
-  "pooling_rate": 1,
-  "write_to_terminal": false,
-  "write_to_file": "Simulation"
+  "pooling_rate": 1.0,
+  "terminal": {
+    "enabled": true,
+    "level": 2
+  },
+  "file": {
+    "enabled": true,
+    "level": 3,
+    "name": "Simulation"
+  }
 }

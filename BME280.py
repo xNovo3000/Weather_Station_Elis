@@ -20,6 +20,7 @@ class BME280(AbstractSensor):
 
     def __init__(self):
         AbstractSensor.__init__(self, "BME280")
+        # inizializza gli output
         self.measurements["humidity"] = 0.0
         self.measurements["pressure"] = 0.0
         self.measurements["ambient_temperature"] = 0.0
@@ -30,20 +31,21 @@ class BME280(AbstractSensor):
         except Exception as e:
             self.bus = None
             self.logger.err(self.sensor_name, "Init error: {}".format(e))
+        # avvisa che il sensore si è avviato correttamente se è realmente così
+        if self:
+            self.logger.info(self.sensor_name, "Initialized sensor correctly")
 
-    def read(self):
-        if self:  # verifica se il senore è ok
-            # ottieni le misurazioni
-            bme280_data = bme280.sample(self.bus, self.configurations["address"])
-            # salva bloccando le operazioni concorrenti
-            self.measurements_mutex.acquire()
-            self.measurements["humidity"] = bme280_data.humidity
-            self.measurements["pressure"] = bme280_data.pressure
-            self.measurements["ambient_temperature"] = bme280_data.temperature
-            self.measurements_mutex.release()
-            # logga le misurazioni appena ottenute
-            self.logger.info(self.sensor_name, json.dumps(self.measurements))
+    def on_read(self):
+        # ottieni le misurazioni
+        bme280_data = bme280.sample(self.bus, self.configurations["address"])
+        # salva bloccando le operazioni concorrenti
+        self.measurements_mutex.acquire()
+        self.measurements["humidity"] = bme280_data.humidity
+        self.measurements["pressure"] = bme280_data.pressure
+        self.measurements["ambient_temperature"] = bme280_data.temperature
+        self.measurements_mutex.release()
+        # logga le misurazioni appena ottenute
+        self.logger.debug(self.sensor_name, json.dumps(self.measurements))
 
     def __bool__(self):
-        # verifica se il bus è ok
-        return self.bus is not None
+        return AbstractSensor.__bool__(self) and self.bus is not None

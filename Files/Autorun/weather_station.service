@@ -1,5 +1,7 @@
 [Unit]
 Description=Weather Station autorun service
+Wants=network-online.target
+After=nss-lookup.target
 
 [Service]
 ExecStart=/usr/bin/python3 /home/pi/Weather_Station_Elis/WeatherStation.py

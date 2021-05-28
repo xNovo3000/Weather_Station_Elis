@@ -1,5 +1,12 @@
 {
-  "pooling_rate": 1,
-  "write_to_terminal": true,
-  "write_to_file": "WeatherStation"
+  "pooling_rate": 1.0,
+  "terminal": {
+    "enabled": true,
+    "level": 3
+  },
+  "file": {
+    "enabled": true,
+    "level": 3,
+    "name": "WeatherStation"
+  }
 }

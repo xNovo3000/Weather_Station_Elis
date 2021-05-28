@@ -15,7 +15,7 @@ class SimulationClient(AbstractClient):
     def __init__(self):
         AbstractClient.__init__(self, "Simulation")
 
-    def publish(self):
+    def on_publish(self):
         if self.client.is_connected():
             self.logger.info(self.client_name, "Send data")
 
