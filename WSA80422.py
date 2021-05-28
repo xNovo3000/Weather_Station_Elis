@@ -140,8 +140,12 @@ class WSA80422(AbstractSensor):
         self.measurements_mutex.release()  # unlock guard
         # log data
         self.logger.info(self.sensor_name, json.dumps(self.measurements))
-        # return the data
-        return AbstractSensor.get_measurements(self)
+        # get copy of measurements
+        measurements = AbstractSensor.get_measurements(self)
+        # reset rainfall
+        self.measurements["rainfall"] = 0.0
+        # return current measurements
+        return measurements
 
     def __bool__(self):
         cond1 = self.wind_speed_sensor_switch_reed is not None
