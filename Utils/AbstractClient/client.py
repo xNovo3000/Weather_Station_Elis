@@ -43,7 +43,7 @@ class AbstractClient(Thread):
         if rc == 0:  # connesso correttamente
             host = self.configurations["host"]
             port = self.configurations["port"]
-            self.logger.info("MQTT", "Connected to {}:{}".format(host, port))
+            self.logger.debug("MQTT", "Connected to {}:{}".format(host, port))
             # imposta la path di invio
             client.subscribe('v1/devices/me/attributes/response/+', self.configurations["qos"])
             # avvia il thread di invio dati
@@ -116,7 +116,7 @@ class AbstractClient(Thread):
         host = self.configurations["host"]
         port = self.configurations["port"]
         keep_alive = self.configurations["keep_alive"]
-        self.logger.info(self.client_name, "Tentativo di connessione a {}:{}".format(host, port))
+        self.logger.info(self.client_name, "Connecting to {}:{}".format(host, port))
         self.client.connect(host, port, keep_alive)
         self.client.loop_forever()
 

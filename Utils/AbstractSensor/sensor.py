@@ -34,7 +34,7 @@ class AbstractSensor(Thread):
 
     # METODO CHIAMATO QUANDO IL SENSORE VIENE STOPPATO
     def on_stop(self):
-        self.logger.info(self.sensor_name, "AbstractSensor.on_stop(self) not implemented!")
+        self.logger.info(self.sensor_name, "Stopped sensor")
 
     # CHIAMATO DA Thread.start(self)
     def run(self):

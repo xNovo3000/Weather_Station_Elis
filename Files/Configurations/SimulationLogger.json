@@ -2,11 +2,13 @@
   "pooling_rate": 1.0,
   "terminal": {
     "enabled": true,
-    "level": 2
+    "level": 20
   },
   "file": {
     "enabled": true,
-    "level": 3,
-    "name": "Simulation"
+    "level": 10,
+    "name": "Simulation",
+    "max_bytes": 16777216,
+    "backup_count": 3
   }
 }
