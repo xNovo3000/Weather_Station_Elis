@@ -25,20 +25,19 @@ class WeatherStationClient(AbstractClient):
         self.wsa80422 = WSA80422()
 
     # PUBLISH
-    def on_publish(self):
+    def publish(self):
         # ottieni le misurazioni
         measuraments = {}
         measuraments.update(self.ds18b20.get_measurements())
         measuraments.update(self.bme280.get_measurements())
         measuraments.update(self.wsa80422.get_measurements())
         if self.client.is_connected():
+            # crea una variabile c
+            json_measuremets = json.dumps(measuraments)
             # send to thingsboard
-            self.client.on_publish(self.configurations["topic"], json.dumps(measuraments), self.configurations["qos"])
-
-    def on_stop(self):
-        self.bme280.join()
-        self.ds18b20.join()
-        self.wsa80422.join()
+            self.client.publish(self.configurations["topic"], json_measuremets, self.configurations["qos"])
+            # log
+            self.logger.info(self.client_name, json_measuremets)
 
     def run(self):
         # se i sensori sono ok allora il client può partire
@@ -49,9 +48,6 @@ class WeatherStationClient(AbstractClient):
             AbstractClient.run(self)
         else:
             self.logger.err(self.client_name, "At least one sensor doesn't work correctly")
-
-    def __bool__(self):
-        return AbstractClient.__bool__(self) and self.bme280 and self.ds18b20 and self.wsa80422
 
 
 if __name__ == "__main__":

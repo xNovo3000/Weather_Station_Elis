@@ -19,26 +19,12 @@ import Utils.Configs as Configs
 # Nuova classe Logger
 class Logger(Thread):
 
-    __LOG_LEVEL = {
-        0: {
-            "label": "ERR",
-            "color": "\033[91m"
-        },
-        1: {
-            "label": "WARN",
-            "color": "\033[93m"
-        },
-        2: {
-            "label": "INFO",
-            "color": "\033[94m"
-        },
-        3: {
-            "label": "DEBUG",
-            "color": "\033[0m"
-        },
-        -1: {
-            "color": "\033[0m"
-        },
+    # I COLORI IN OUTPUT DA TERMINALE
+    __LOG_COLOR = {
+        "INFO": "\033[94m",
+        "WARN": "\033[93m",
+        "ERR": "\033[91m",
+        "NONE": "\033[0m",
     }
 
     def __init__(self, name):
@@ -46,11 +32,11 @@ class Logger(Thread):
         self.configurations = Configs.load(name)
         self.strings = []
         self.strings_mutex = Lock()
-        if self.configurations["file"]["enabled"]:
+        if self.configurations["write_to_file"] is not None:
             path = os.path.join(os.path.dirname(__file__), "..", "..", "Files", "Logs")
             if not os.path.exists(path):
                 os.makedirs(path)
-            self.file = open(os.path.join(path, "{}.log".format(self.configurations["file"]["name"])), "a+")
+            self.file = open(os.path.join(path, "{}.log".format(self.configurations["write_to_file"])), "a+")
         else:
             self.file = None
 
@@ -70,39 +56,31 @@ class Logger(Thread):
         self.strings.clear()
         self.strings_mutex.release()
         # check if log to terminal
-        if self.configurations["terminal"]["enabled"]:
+        if self.configurations["write_to_terminal"]:
             for (string, code) in now_strings:
-                if self.configurations["terminal"]["level"] >= code:
-                    print("{}{}{}".format(Logger.__LOG_LEVEL[code]["color"], string, Logger.__LOG_LEVEL[-1]["color"]))
+                print("{}{}{}".format(Logger.__LOG_COLOR[code], string, Logger.__LOG_COLOR["NONE"]))
         # check if log to file
         if self.file is not None:
-            for (string, code) in now_strings:
-                if self.configurations["file"]["level"] >= code:
-                    self.file.write("{}\n".format(string))
+            for (string, _) in now_strings:
+                self.file.write("{}\n".format(string))
             self.file.flush()
 
-    # ERRORE BLOCCANTE - IL PROGRAMMA TERMINA
+    # STAMPA UN MESSAGGIO DI ERRORE
     def err(self, name, value):
-        self.__generate_string(0, name, value)
+        self.__generate_string("ERR", name, value)
 
-    # ERRORE NON BLOCCANTE - IL PROGRAMMA PROSEGUE L'ESECUZIONE
+    # STAMPA UN AVVERTIMENTO
     def warn(self, name, value):
-        self.__generate_string(1, name, value)
+        self.__generate_string("WARN", name, value)
 
-    # INFORMAZIONE - ES. CONNESSO ALLA WEATHER STATION, OTTENUTO LE MISURAZIONI, ECC...
+    # STAMPA UN'INFORMAZIONE
     def info(self, name, value):
-        self.__generate_string(2, name, value)
+        self.__generate_string("INFO", name, value)
 
-    # INFORMAZIONE DI DEBUG - UTILE SOLO PER IL DEBUGGING (VALORI, CHECKPOINT, ECC...)
-    def debug(self, name, value):
-        self.__generate_string(3, name, value)
-
-    # GENERA LA STRINGA DA SCRIVERE EVENTUALMENTE SIA SUL TERMINALE CHE SU FILE
+    # FUNZIONE NASCOSTA CHE STAMPA SIA SU CONSOLE CHE SU FILE
     def __generate_string(self, code, name, value):
         self.strings_mutex.acquire()
         self.strings.append(  # tuple (string, code)
-            ("{} - [{}] {}: {}".format(
-                datetime.now().strftime("%Y/%m/%d %H:%M:%S"), Logger.__LOG_LEVEL[code]["label"], name, value
-            ), code)
+            ("{} - [{}] {}: {}".format(datetime.now().strftime("%Y/%m/%d %H:%M:%S"), code, name, value), code)
         )
         self.strings_mutex.release()
