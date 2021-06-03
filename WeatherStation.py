@@ -38,6 +38,12 @@ class WeatherStationClient(AbstractClient):
             # avvisa che sono stati inviati dati a TB
             self.logger.info(self.client_name, "Data sent to Thingsboard")
 
+    def start(self):
+        AbstractClient.start(self)
+        self.bme280.start()
+        self.ds18b20.start()
+        self.wsa80422.start()
+
     def join(self, timeout=...):
         AbstractClient.join(self, timeout)
         self.bme280.join()
@@ -51,3 +57,4 @@ class WeatherStationClient(AbstractClient):
 if __name__ == "__main__":
     client = WeatherStationClient()
     client.start()
+    client.join()

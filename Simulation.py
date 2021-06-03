@@ -23,3 +23,4 @@ class SimulationClient(AbstractClient):
 if __name__ == "__main__":
     client = SimulationClient()
     client.start()
+    client.join()

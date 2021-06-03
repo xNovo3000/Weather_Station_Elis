@@ -42,14 +42,12 @@ class AbstractClient(Thread):
         if rc == 0:  # connesso correttamente
             host = self.configurations["host"]
             port = self.configurations["port"]
-            self.logger.info("MQTT", "Connected to {}:{}".format(host, port))
-            # imposta la path di invio
-            client.subscribe('v1/devices/me/attributes/response/+', self.configurations["qos"])
             # valida il client
             self.valid = True
-            # avvia il thread di invio dati
-            if not self.is_alive():
-                Thread.start(self)
+            # imposta la path di invio
+            client.subscribe('v1/devices/me/attributes/response/+', self.configurations["qos"])
+            # logga la riuscita della connessione
+            self.logger.info("MQTT", "Connected to {}:{}".format(host, port))
         else:  # errore nella connessione
             self.logger.err("MQTT", "Connection failed. Error code: {}".format(rc))
             self.client.disconnect()
@@ -95,7 +93,7 @@ class AbstractClient(Thread):
                 self.publish()
             except Exception as e:
                 self.logger.err(self.client_name, e)  # logga l'errore ricevuto
-                self.client.disconnect()  # disconnetti il client (forza il join)
+                self.valid = False  # invalida il client
             end = time.time()
             if (end - begin) < self.configurations["publish_time"]:
                 time.sleep(self.configurations["publish_time"] - (end - begin))
@@ -105,19 +103,26 @@ class AbstractClient(Thread):
 
     # AL POSTO DI FAR PARTIRE IL THREAD PROVA A CONNETTERSI AL CLIENT MQTT
     def start(self):
+        # ottieni i valori
         host = self.configurations["host"]
         port = self.configurations["port"]
         keep_alive = self.configurations["keep_alive"]
+        # logga il tentativo di connessione
         self.logger.info(self.client_name, "Trying to connect to {}:{}".format(host, port))
-        self.client.connect(host, port, keep_alive)
-        self.client.loop_forever()
-        self.join()
+        # prova a connetterti (termina solo quando ci si è connessi o meno)
+        try:
+            self.client.connect(host, port, keep_alive)
+            self.client.loop_start()
+            Thread.start(self)
+        except Exception as e:
+            self.logger.err(self.client_name, e)
 
-    # EFFETTUA IL JOIN
+    # EFFETTUA IL JOIN SOLO SE IL THREAD E' REALMENTE PARTITO
     def join(self, timeout=...):
-        self.valid = False
+        if self.is_alive():
+            Thread.join(self)
         self.logger.join()
-        Thread.join(self)
+        self.client.loop_stop(force=True)
 
     # VERIFICA SE IL CLIENT E' VALIDO
     def __bool__(self):
