@@ -9,71 +9,50 @@ Author: NetcomGroup Innovation Team
 # PYTHON LIB IMPORT
 import os
 import time
-import logging
+from datetime import datetime
 from threading import Thread, Lock
-from logging.handlers import RotatingFileHandler
 
 # AMBIENT IMPORT
 import Utils.Configs as Configs
-from Utils.Logger.custom_formatter import CustomFormatter
 
 
 # Nuova classe Logger
 class Logger(Thread):
+
+    __LOG_LEVEL = {
+        0: {
+            "label": "ERR",
+            "color": "\033[91m"
+        },
+        1: {
+            "label": "WARN",
+            "color": "\033[93m"
+        },
+        2: {
+            "label": "INFO",
+            "color": "\033[94m"
+        },
+        3: {
+            "label": "DEBUG",
+            "color": "\033[0m"
+        },
+        -1: {
+            "color": "\033[0m"
+        },
+    }
 
     def __init__(self, name):
         Thread.__init__(self)
         self.configurations = Configs.load(name)
         self.strings = []
         self.strings_mutex = Lock()
-        # gestisce la retrocompatibilità con le vecchie versioni del logger
-        if "write_to_terminal" in self.configurations:
-            self.configurations["file"] = {
-                "enabled": self.configurations["write_to_file"] is not None,
-                "level": 10,
-                "name": self.configurations["write_to_file"],
-                "max_bytes": 16777216,
-                "backup_count": 3
-            }
-            self.configurations["terminal"] = {
-                "enabled": self.configurations["write_to_terminal"],
-                "level": 10
-            }
-        # adesso inizializzo il logger di logging
-        self.logger = logging.getLogger(name=name)
-        self.logger.setLevel(10)
-        # verifica se si vuole stampare su terminale
-        if self.configurations["terminal"]["enabled"]:
-            terminal_stream_handler = logging.StreamHandler()
-            terminal_stream_handler.setFormatter(CustomFormatter(
-                fmt="%(asctime)s - [%(levelname)s] %(message)s",
-                datefmt="%Y/%m/%d %H:%M:%S",
-                is_terminal=True
-            ))
-            terminal_stream_handler.setLevel(self.configurations["terminal"]["level"])
-            self.logger.addHandler(terminal_stream_handler)
         if self.configurations["file"]["enabled"]:
-            # genera la path del file
             path = os.path.join(os.path.dirname(__file__), "..", "..", "Files", "Logs")
             if not os.path.exists(path):
                 os.makedirs(path)
-            # genera l'handler
-            rotating_file_handler = RotatingFileHandler(
-                filename=os.path.join(path, "{}.log".format(self.configurations["file"]["name"])),
-                mode="a",
-                maxBytes=self.configurations["file"]["max_bytes"],
-                backupCount=self.configurations["file"]["backup_count"]
-            )
-            # inietta il formatter
-            rotating_file_handler.setFormatter(CustomFormatter(
-                fmt="%(asctime)s - [%(levelname)s] %(message)s",
-                datefmt="%Y/%m/%d %H:%M:%S",
-                is_terminal=False
-            ))
-            # imposta il livello di log
-            rotating_file_handler.setLevel(self.configurations["file"]["level"])
-            # registra nel logger
-            self.logger.addHandler(rotating_file_handler)
+            self.file = open(os.path.join(path, "{}.log".format(self.configurations["file"]["name"])), "a+")
+        else:
+            self.file = None
 
     # CHIAMATO DA Thread.start(self)
     def run(self):
@@ -90,28 +69,40 @@ class Logger(Thread):
         now_strings = self.strings.copy()
         self.strings.clear()
         self.strings_mutex.release()
-        # log using logging
-        for (string, level) in now_strings:
-            self.logger.log(level=level, msg=string)
+        # check if log to terminal
+        if self.configurations["terminal"]["enabled"]:
+            for (string, code) in now_strings:
+                if self.configurations["terminal"]["level"] >= code:
+                    print("{}{}{}".format(Logger.__LOG_LEVEL[code]["color"], string, Logger.__LOG_LEVEL[-1]["color"]))
+        # check if log to file
+        if self.file is not None:
+            for (string, code) in now_strings:
+                if self.configurations["file"]["level"] >= code:
+                    self.file.write("{}\n".format(string))
+            self.file.flush()
 
     # ERRORE BLOCCANTE - IL PROGRAMMA TERMINA
     def err(self, name, value):
-        self.__generate_string(logging.ERROR, name, value)
+        self.__generate_string(0, name, value)
 
     # ERRORE NON BLOCCANTE - IL PROGRAMMA PROSEGUE L'ESECUZIONE
     def warn(self, name, value):
-        self.__generate_string(logging.WARNING, name, value)
+        self.__generate_string(1, name, value)
 
     # INFORMAZIONE - ES. CONNESSO ALLA WEATHER STATION, OTTENUTO LE MISURAZIONI, ECC...
     def info(self, name, value):
-        self.__generate_string(logging.INFO, name, value)
+        self.__generate_string(2, name, value)
 
     # INFORMAZIONE DI DEBUG - UTILE SOLO PER IL DEBUGGING (VALORI, CHECKPOINT, ECC...)
     def debug(self, name, value):
-        self.__generate_string(logging.DEBUG, name, value)
+        self.__generate_string(3, name, value)
 
     # GENERA LA STRINGA DA SCRIVERE EVENTUALMENTE SIA SUL TERMINALE CHE SU FILE
     def __generate_string(self, code, name, value):
         self.strings_mutex.acquire()
-        self.strings.append(("{}: {}".format(name, value), code))
+        self.strings.append(  # tuple (string, code)
+            ("{} - [{}] {}: {}".format(
+                datetime.now().strftime("%Y/%m/%d %H:%M:%S"), Logger.__LOG_LEVEL[code]["label"], name, value
+            ), code)
+        )
         self.strings_mutex.release()

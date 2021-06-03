@@ -2,13 +2,11 @@
   "pooling_rate": 1.0,
   "terminal": {
     "enabled": true,
-    "level": 10
+    "level": 3
   },
   "file": {
     "enabled": true,
-    "level": 10,
-    "name": "WeatherStation",
-    "max_bytes": 16777216,
-    "backup_count": 3
+    "level": 3,
+    "name": "WeatherStation"
   }
 }
