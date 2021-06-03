@@ -46,4 +46,4 @@ class BME280(AbstractSensor):
 
     def __bool__(self):
         # verifica se il bus è ok
-        return self.bus is not None
+        return AbstractSensor.__bool__(self) and self.bus is not None

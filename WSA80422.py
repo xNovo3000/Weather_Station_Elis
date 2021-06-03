@@ -150,5 +150,5 @@ class WSA80422(AbstractSensor):
     def __bool__(self):
         cond1 = self.wind_speed_sensor_switch_reed is not None
         cond2 = self.adc is not None
-        cond4 = self.rain_sensor_switch_reed is not None
-        return cond1 and cond2 and cond4
+        cond3 = self.rain_sensor_switch_reed is not None
+        return AbstractSensor.__bool__(self) and cond1 and cond2 and cond3

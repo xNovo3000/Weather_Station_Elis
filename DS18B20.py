@@ -68,4 +68,4 @@ class DS18B20(AbstractSensor):
                 self.logger.err(self.sensor_name, "Error reading measurements. {}".format(e))
         
     def __bool__(self):
-        return self.device_file is not None
+        return AbstractSensor.__bool__(self) and self.device_file is not None

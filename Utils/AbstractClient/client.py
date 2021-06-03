@@ -22,6 +22,7 @@ class AbstractClient(Thread):
     # INIZIALIZZA LE BASI DEL CLIENT
     def __init__(self, client_name):
         Thread.__init__(self)
+        self.valid = False
         self.client_name = client_name
         self.configurations = Configs.load(client_name)
         self.logger = get_logger(self.configurations["logger"])
@@ -44,11 +45,14 @@ class AbstractClient(Thread):
             self.logger.info("MQTT", "Connected to {}:{}".format(host, port))
             # imposta la path di invio
             client.subscribe('v1/devices/me/attributes/response/+', self.configurations["qos"])
+            # valida il client
+            self.valid = True
             # avvia il thread di invio dati
             if not self.is_alive():
                 Thread.start(self)
         else:  # errore nella connessione
             self.logger.err("MQTT", "Connection failed. Error code: {}".format(rc))
+            self.client.disconnect()
 
     # ESEGUITA QUANDO CI SI DISCONNETTE
     def __on_disconnect(self, client, userdata, message):
@@ -85,20 +89,36 @@ class AbstractClient(Thread):
     def run(self):
         self.logger.info(self.client_name, "Started client")
         time.sleep(self.configurations["publish_time"])
-        while True:
+        while self:
             begin = time.time()
-            self.publish()
+            try:
+                self.publish()
+            except Exception as e:
+                self.logger.err(self.client_name, e)  # logga l'errore ricevuto
+                self.client.disconnect()  # disconnetti il client (forza il join)
             end = time.time()
             if (end - begin) < self.configurations["publish_time"]:
                 time.sleep(self.configurations["publish_time"] - (end - begin))
             else:
                 self.logger.warn(self.client_name, "Publish time is lower of {} seconds".format(end - begin))
+        self.logger.info(self.client_name, "Stopped client")
 
     # AL POSTO DI FAR PARTIRE IL THREAD PROVA A CONNETTERSI AL CLIENT MQTT
     def start(self):
         host = self.configurations["host"]
         port = self.configurations["port"]
         keep_alive = self.configurations["keep_alive"]
-        self.logger.info(self.client_name, "Tentativo di connessione a {}:{}".format(host, port))
+        self.logger.info(self.client_name, "Trying to connect to {}:{}".format(host, port))
         self.client.connect(host, port, keep_alive)
         self.client.loop_forever()
+        self.join()
+
+    # EFFETTUA IL JOIN
+    def join(self, timeout=...):
+        self.valid = False
+        self.logger.join()
+        Thread.join(self)
+
+    # VERIFICA SE IL CLIENT E' VALIDO
+    def __bool__(self):
+        return self.valid
