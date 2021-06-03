@@ -2,6 +2,10 @@
 
 - NB: scrivere qui un resoconto di tutte le modifiche
 
+### 3 Giugno 2021
+- Nuovo logger basato su logging
+- Retrocompatibile con il vecchio logger
+
 ### 25 Maggio 2021
 - Aggiunto l'autorun per la Weather Station
 - Migliorato il sistema di logging sotto la scocca

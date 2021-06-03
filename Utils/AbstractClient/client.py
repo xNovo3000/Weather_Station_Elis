@@ -41,34 +41,36 @@ class AbstractClient(Thread):
         if rc == 0:  # connesso correttamente
             host = self.configurations["host"]
             port = self.configurations["port"]
-            self.logger.info("MQTT Client", "Connesso a {}:{}".format(host, port))
+            self.logger.info("MQTT", "Connected to {}:{}".format(host, port))
             # imposta la path di invio
             client.subscribe('v1/devices/me/attributes/response/+', self.configurations["qos"])
             # avvia il thread di invio dati
             if not self.is_alive():
                 Thread.start(self)
         else:  # errore nella connessione
-            self.logger.err("MQTT", "Connessione fallita. Codice errore: {}".format(rc))
+            self.logger.err("MQTT", "Connection failed. Error code: {}".format(rc))
 
     # ESEGUITA QUANDO CI SI DISCONNETTE
     def __on_disconnect(self, client, userdata, message):
-        self.logger.info("MQTT", "Disconnesso: {}".format(message))
+        self.logger.debug("MQTT", "Disconnected: {}".format(message))
 
     # ESEGUITA QUANDO VIENE RICEVUTO UN MESSAGGIO DAL SERVER
     def __on_message(self, client, userdata, message):
-        self.logger.info("MQTT", "Messaggio ricevuto: {}".format(str(message.payload.decode("utf-8"))))
+        self.logger.debug("MQTT", "Received message: {}".format(str(message.payload.decode("utf-8"))))
 
     # ESEGUITA QUANDO VIENE PUBBLICATO UN RISULTATO SU SERVER
     def __on_publish(self, lient, userdata, mid):
-        self.logger.info("MQTT", "Messaggio inviato")
+        self.logger.debug("MQTT", "Sent message")
 
     # ESEGUITA QUANDO VIENE INSERITA UNA PATH PER L'INVIO DEI DATI
     def __on_subscribe(self, client, userdata, mid, granted_qos):
-        self.logger.info("MQTT", "Mid: {}. QoS garantiti: {}".format(mid, granted_qos))
+        self.logger.debug("MQTT", "Mid: {}. Granted QoS: {}".format(mid, granted_qos))
 
     # FUNZIONE DI LOG
     def __on_log(self, client, userdata, level, buf):
-        if level == mqtt.MQTT_LOG_INFO or level == mqtt.MQTT_LOG_NOTICE or level == mqtt.MQTT_LOG_DEBUG:
+        if level == mqtt.MQTT_LOG_NOTICE or level == mqtt.MQTT_LOG_DEBUG:
+            self.logger.debug("MQTT", buf)
+        elif level == mqtt.MQTT_LOG_INFO:
             self.logger.info("MQTT", buf)
         elif level == mqtt.MQTT_LOG_WARNING:
             self.logger.warn("MQTT", buf)

@@ -34,7 +34,7 @@ class AbstractSensor(Thread):
 
     # CHIAMATO DA Thread.start(self)
     def run(self):
-        self.logger.warn(self.sensor_name, "Started sensor")
+        self.logger.info(self.sensor_name, "Started sensor")
         while self.is_active:
             begin = time.time()
             self.read()
@@ -43,7 +43,7 @@ class AbstractSensor(Thread):
                 time.sleep(self.configurations["pooling_rate"] - (end - begin))
             else:
                 self.logger.warn(self.sensor_name, "Pooling rate is lower of {} seconds".format(end - begin))
-        self.logger.warn(self.sensor_name, "Stopped sensor")
+        self.logger.info(self.sensor_name, "Stopped sensor")
 
     # RENDE ATTIVO IL SENSORE
     def start(self):
