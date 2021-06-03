@@ -42,7 +42,7 @@ class DS18B20(AbstractSensor):
         try:
             return lines[0].strip()[-3:] == crc_check
         except Exception as e:
-            self.logger.warn(self.sensor_name, "CRC check failed: {}", e)
+            self.logger.warn(self.sensor_name, "CRC check failed: {}".format(e))
             return False
         
     def read(self):

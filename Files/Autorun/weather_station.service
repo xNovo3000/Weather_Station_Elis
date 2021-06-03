@@ -4,7 +4,6 @@ Wants=network-online.target
 After=nss-lookup.target
 
 [Service]
-Type=notify
 ExecStart=/usr/bin/python3 /home/pi/Weather_Station_Elis/WeatherStation.py
 WorkingDirectory=/home/pi/Weather_Station_Elis
 Restart=always
