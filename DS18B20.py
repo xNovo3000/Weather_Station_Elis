@@ -39,7 +39,11 @@ class DS18B20(AbstractSensor):
         crc_check = "NO"
         if self.configurations["crc_check"]:
             crc_check = "YES"
-        return lines[0].strip()[-3:] == crc_check
+        try:
+            return lines[0].strip()[-3:] == crc_check
+        except Exception as e:
+            self.logger.warn(self.sensor_name, "CRC check failed: {}", e)
+            return False
         
     def read(self):
         attempts = 0
