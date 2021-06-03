@@ -84,10 +84,12 @@ class WSA80422(AbstractSensor):
 
     # EVERY HALF ROTATION, ADD 1 TO THE COUNT
     def __spin(self):
+        self.logger.debug(self.sensor_name, "Anemometer spinned")
         self.anemometer_spins += 1
 
     # EVERY TIME THE BUCKET TIPS
     def __bucket_tipped(self):
+        self.logger.debug(self.sensor_name, "Bucket tipped")
         self.measurements["rainfall"] += self.configurations["rain_gauge_bucket_size"]
 
     # GET THE WIND SPEED
@@ -139,7 +141,7 @@ class WSA80422(AbstractSensor):
         self.wind_directions.clear()
         self.measurements_mutex.release()  # unlock guard
         # log data
-        self.logger.info(self.sensor_name, json.dumps(self.measurements))
+        self.logger.debug(self.sensor_name, json.dumps(self.measurements))
         # get copy of measurements
         measurements = AbstractSensor.get_measurements(self)
         # reset rainfall

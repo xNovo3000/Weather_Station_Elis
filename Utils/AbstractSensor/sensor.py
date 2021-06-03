@@ -12,7 +12,7 @@ from threading import Thread, Lock
 
 # AMBIENT IMPORT
 import Utils.Configs as Configs
-from Utils.Logger import get_logger
+from Utils.Logger import get_logger, destroy_logger
 
 
 # LA CLASSE ESTESA DA TUTTI I SENSORI
@@ -58,6 +58,7 @@ class AbstractSensor(Thread):
     def join(self, timeout=...):
         self.valid = False
         Thread.join(self)
+        destroy_logger(self.configurations["logger"])
 
     # OTTIENE LE ULTIME MISURAZIONI
     def get_measurements(self):

@@ -6,13 +6,14 @@ Updated: 02/05/2021
 Author: NetcomGroup Innovation Team
 """
 
-# AMBIENT IMPORT
+# PYTHON IMPORT
 import json
 
-from Utils.AbstractClient import AbstractClient
+# AMBIENT IMPORT
 from BME280 import BME280
 from DS18B20 import DS18B20
 from WSA80422 import WSA80422
+from Utils.AbstractClient import AbstractClient
 
 
 class WeatherStationClient(AbstractClient):
@@ -51,7 +52,10 @@ class WeatherStationClient(AbstractClient):
         self.wsa80422.join()
 
     def __bool__(self):
-        return AbstractClient.__bool__(self) and self.bme280 and self.ds18b20 and self.wsa80422
+        s1 = bool(self.bme280)
+        s2 = bool(self.ds18b20)
+        s3 = bool(self.wsa80422)
+        return AbstractClient.__bool__(self) and s1 and s2 and s3
 
 
 if __name__ == "__main__":

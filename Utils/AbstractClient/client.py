@@ -12,7 +12,7 @@ from threading import Thread
 import paho.mqtt.client as mqtt
 
 # AMBIENT IMPORT
-from Utils.Logger import get_logger
+from Utils.Logger import get_logger, destroy_logger
 import Utils.Configs as Configs
 
 
@@ -38,7 +38,7 @@ class AbstractClient(Thread):
         self.client.on_log = self.__on_log
 
     # ESEGUITA QUANDO CI SI CONNETTE
-    def __on_connect(self, client, userdata, flags, rc):
+    def __on_connect(self, client, _userdata, _flags, rc):
         if rc == 0:  # connesso correttamente
             host = self.configurations["host"]
             port = self.configurations["port"]
@@ -53,23 +53,23 @@ class AbstractClient(Thread):
             self.client.disconnect()
 
     # ESEGUITA QUANDO CI SI DISCONNETTE
-    def __on_disconnect(self, client, userdata, message):
+    def __on_disconnect(self, _client, _userdata, message):
         self.logger.debug("MQTT", "Disconnected: {}".format(message))
 
     # ESEGUITA QUANDO VIENE RICEVUTO UN MESSAGGIO DAL SERVER
-    def __on_message(self, client, userdata, message):
+    def __on_message(self, _client, _userdata, message):
         self.logger.debug("MQTT", "Received message: {}".format(str(message.payload.decode("utf-8"))))
 
     # ESEGUITA QUANDO VIENE PUBBLICATO UN RISULTATO SU SERVER
-    def __on_publish(self, lient, userdata, mid):
+    def __on_publish(self, _client, _userdata, _mid):
         self.logger.debug("MQTT", "Sent message")
 
     # ESEGUITA QUANDO VIENE INSERITA UNA PATH PER L'INVIO DEI DATI
-    def __on_subscribe(self, client, userdata, mid, granted_qos):
+    def __on_subscribe(self, _client, _userdata, mid, granted_qos):
         self.logger.debug("MQTT", "Mid: {}. Granted QoS: {}".format(mid, granted_qos))
 
     # FUNZIONE DI LOG
-    def __on_log(self, client, userdata, level, buf):
+    def __on_log(self, _client, _userdata, level, buf):
         if level == mqtt.MQTT_LOG_NOTICE or level == mqtt.MQTT_LOG_DEBUG:
             self.logger.debug("MQTT", buf)
         elif level == mqtt.MQTT_LOG_INFO:
@@ -109,7 +109,7 @@ class AbstractClient(Thread):
         keep_alive = self.configurations["keep_alive"]
         # logga il tentativo di connessione
         self.logger.info(self.client_name, "Trying to connect to {}:{}".format(host, port))
-        # prova a connetterti (termina solo quando ci si è connessi o meno)
+        # prova a connetterti
         try:
             self.client.connect(host, port, keep_alive)
             self.client.loop_start()
@@ -121,7 +121,7 @@ class AbstractClient(Thread):
     def join(self, timeout=...):
         if self.is_alive():
             Thread.join(self)
-        self.logger.join()
+        destroy_logger(self.configurations["logger"])
         self.client.loop_stop(force=True)
 
     # VERIFICA SE IL CLIENT E' VALIDO
