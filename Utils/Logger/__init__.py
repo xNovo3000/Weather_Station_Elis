@@ -16,3 +16,9 @@ def get_logger(name):
         loggers[name] = Logger(name=name)
         loggers[name].start()
     return loggers[name]
+
+
+def destroy_logger(name):
+    if name in loggers:
+        loggers[name].join()
+        loggers.pop(name)

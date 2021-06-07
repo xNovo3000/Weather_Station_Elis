@@ -12,7 +12,7 @@ from threading import Thread, Lock
 
 # AMBIENT IMPORT
 import Utils.Configs as Configs
-from Utils.Logger import get_logger
+from Utils.Logger import get_logger, destroy_logger
 
 
 # LA CLASSE ESTESA DA TUTTI I SENSORI
@@ -21,7 +21,7 @@ class AbstractSensor(Thread):
     # INIZIALIZZA LE BASI DEL SENSORE
     def __init__(self, sensor_name):
         Thread.__init__(self)
-        self.is_active = False
+        self.valid = False
         self.measurements = {}
         self.sensor_name = sensor_name
         self.measurements_mutex = Lock()
@@ -34,26 +34,31 @@ class AbstractSensor(Thread):
 
     # CHIAMATO DA Thread.start(self)
     def run(self):
-        self.logger.warn(self.sensor_name, "Started sensor")
-        while self.is_active:
+        self.logger.info(self.sensor_name, "Started sensor")
+        while self:
             begin = time.time()
-            self.read()
+            try:
+                self.read()
+            except Exception as e:
+                self.logger.err(self.sensor_name, e)  # stampa l'errore ricevuto
+                self.valid = False  # invalida il sensore
             end = time.time()
             if (end - begin) < self.configurations["pooling_rate"]:
                 time.sleep(self.configurations["pooling_rate"] - (end - begin))
             else:
                 self.logger.warn(self.sensor_name, "Pooling rate is lower of {} seconds".format(end - begin))
-        self.logger.warn(self.sensor_name, "Stopped sensor")
+        self.logger.info(self.sensor_name, "Stopped sensor")
 
     # RENDE ATTIVO IL SENSORE
     def start(self):
-        self.is_active = True
+        self.valid = True
         Thread.start(self)
 
-    # DISATTIVA IL SENSORE E FA IL JOIN DEL THREAD DEL SENSORE
+    # DISATTIVA IL SENSORE
     def join(self, timeout=...):
-        self.is_active = False
+        self.valid = False
         Thread.join(self)
+        destroy_logger(self.configurations["logger"])
 
     # OTTIENE LE ULTIME MISURAZIONI
     def get_measurements(self):
@@ -62,10 +67,6 @@ class AbstractSensor(Thread):
         self.measurements_mutex.release()
         return measurements
 
-    # VEDE SE IL SENSORE E' ATTIVO
-    def is_active(self):
-        return self.is_active
-
-    # SEMPRE FALSO, NECESSITA LA SOVRASCRITTURA
+    # VERIFICA SE IL SENSORE E' VALIDO
     def __bool__(self):
-        return False
+        return self.valid

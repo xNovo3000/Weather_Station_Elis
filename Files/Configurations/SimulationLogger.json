@@ -1,5 +1,14 @@
 {
   "pooling_rate": 1,
-  "write_to_terminal": false,
-  "write_to_file": "Simulation"
+  "terminal": {
+    "enabled": true,
+    "level": 10
+  },
+  "file": {
+    "enabled": true,
+    "level": 20,
+    "name": "Simulation",
+    "max_bytes": 16777216,
+    "backup_count": 3
+  }
 }

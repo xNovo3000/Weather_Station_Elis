@@ -42,8 +42,8 @@ class BME280(AbstractSensor):
             self.measurements["ambient_temperature"] = bme280_data.temperature
             self.measurements_mutex.release()
             # logga le misurazioni appena ottenute
-            self.logger.info(self.sensor_name, json.dumps(self.measurements))
+            self.logger.debug(self.sensor_name, json.dumps(self.measurements))
 
     def __bool__(self):
         # verifica se il bus è ok
-        return self.bus is not None
+        return AbstractSensor.__bool__(self) and self.bus is not None
