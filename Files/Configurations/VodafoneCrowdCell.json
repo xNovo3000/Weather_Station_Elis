@@ -1,7 +1,7 @@
 {
-  "base_url": "http://12b0pwc3j42gg9ee.myfritz.net:25405/api/",
+  "base_url": "https://api.analytics.vodafone.it/api",
   "pooling_rate": 10,
   "logger": "VodafoneLogger",
-  "access_key": "<access_key>",
-  "secret_key": "<secret_key>"
+  "access_key": "kt8zhvc61oRSNNPkHn3cSJ40WADPvolS",
+  "secret_key": "8ZI8FjhhDib6npmYQYfTT3hLhRZSXbQD"
 }

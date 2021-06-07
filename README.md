@@ -2,6 +2,10 @@
 
 - NB: scrivere qui un resoconto di tutte le modifiche
 
+### 7 Giugno 2021
+- Definizione dei nuovi KPI grezzi da inviare a Thingsboard
+- Branch allienato alla versione 1.2
+
 ### 3 Giugno 2021
 - Nuovo logger basato su logging (retrocompatibile >=1.0 <1.2)
 - Migliorato il sistema di gestione degli errori

@@ -28,174 +28,115 @@ class VodafoneCrowdCell(AbstractSensor):
         self.__reset_data()
 
     def __reset_data(self):
+        self.visitatori_totali = 0
         self.visitatori_italiani = 0
         self.visitatori_stranieri = 0
-        self.transiti = 0
-        self.maschi = 0
-        self.femmine = 0
-        self.eta_media = 0
-        self.distanza_lavoro_media = 0
+        self.visitatori_maschi = 0
+        self.visitatori_femmine = 0  # non scrivo visitatrici per questioni di omogeneità delle chiavi
+        self.visite_totali = 0  # per le visite calcolo SOLO le totali
+        self.distanza_casa_0_10 = 0
+        self.distanza_casa_10_20 = 0
+        self.distanza_casa_20_30 = 0
+        self.distanza_casa_30_40 = 0
+        self.distanza_casa_40_50 = 0
+        self.distanza_casa_50_plus = 0
         self.distanza_casa_media = 0
+        self.distanza_lavoro_0_10 = 0
+        self.distanza_lavoro_10_20 = 0
+        self.distanza_lavoro_20_30 = 0
+        self.distanza_lavoro_30_40 = 0
+        self.distanza_lavoro_40_50 = 0
+        self.distanza_lavoro_50_plus = 0
+        self.distanza_lavoro_media = 0
+        self.tempo_permanenza_medio = 0  # gmove dovrebbe dare dati più precisi, al momento li infilo lo stesso
+        self.eta_15_25 = 0
+        self.eta_25_35 = 0
+        self.eta_35_45 = 0
+        self.eta_45_55 = 0
+        self.eta_55_65 = 0
+        self.eta_65_plus = 0
+        self.eta_media = 0
+        self.regione_abruzzo = 0
+        self.regione_basilicata = 0
+        self.regine_calabria = 0
+        self.regione_campania = 0
+        self.regione_emilia_romagna = 0
+        self.regione_friuli_venezia_giulia = 0
+        self.regione_lazio = 0
+        self.regione_liguria = 0
+        self.regione_lombardia = 0
+        self.regione_marche = 0
+        self.regione_molise = 0
+        self.regione_piemonte = 0
+        self.regione_puglia = 0
+        self.regione_sardegna = 0
+        self.regione_sicilia = 0
+        self.regione_toscana = 0
+        self.regione_trentino_alto_adige = 0
+        self.regione_umbria = 0
+        self.regione_valle_aosta = 0
+        self.regione_veneto = 0
 
     def read(self):
+
         # FASE 1: LOGIN
-        try:  # prova a fare la richiesta di login
+        response = requests.post(
+            url="{}/userbackend/login".format(self.configurations["base_url"]),
+            json={
+                "accessKey": self.configurations["access_key"],
+                "secretKey": self.configurations["secret_key"]
+            }
+        )
+        # estrai il json
+        body = response.json()
+        # verifica se il login è ok
+        if response.status_code != 200:
+            self.logger.warn(self.sensor_name, "Login response code: {}".format(response.status_code))
+            self.logger.warn(self.sensor_name, "Login response message: {}".format(body["message"]))
+            return
+        # logga il risultato
+        self.logger.info(self.sensor_name, "Login response code: {}".format(response.status_code))
+        self.logger.info(self.sensor_name, "Login response message: {}".format(body["message"]))
+        # estrai il token
+        token = body["token"]
+
+        # FASE 2: OTTIENI I DATI DI TUTTI I PDV DA VODAFONE
+        response = requests.post(
+            url="{}/retail/stores".format(self.configurations["base_url"]),
+            headers={
+                "X-API-Key": token,
+            }
+        )
+        # estrai il json
+        body = response.json()
+        # verifica se il login è ok
+        if response.status_code != 200:
+            self.logger.warn(self.sensor_name, "Stores response code: {}".format(response.status_code))
+            self.logger.warn(self.sensor_name, "Stores response message: {}".format(body["message"]))
+            return
+        # logga il risultato
+        self.logger.info(self.sensor_name, "Stores response code: {}".format(response.status_code))
+        self.logger.info(self.sensor_name, "Stores response message: {}".format(body["message"]))
+        # salva l'id del pdv
+        pdv_id = body["stores"][0]["id"]
+
+        # FASE 3: FARE LA RICHIESTA "REGINA" (solitamente è sempre una sola pagina ma non si sa mai)
+        current_page = 1
+        total_pages = 1
+        while current_page <= total_pages:
             response = requests.post(
-                url="{}userbackend/login".format(self.configurations["base_url"]),
+                url="{}/retail/stores".format(self.configurations["base_url"]),
+                headers={
+                    "X-API-Key": token,
+                },
                 json={
-                    "accessKey": self.configurations["access_key"],
-                    "secretKey": self.configurations["secret_key"]
+                    "area": "OUTDOOR",
+                    "pdvId": pdv_id,
+                    "date": "<da inserire la data>",
+                    "dimensionsList": [
+                        "gender", "age", "nationality", "workDistance", "homeDistance"
+                    ],
+                    "filtersList": [],
+                    "page": current_page
                 }
             )
-        except requests.RequestException as e:  # qualcosa è andato storto
-            self.logger.err(self.sensor_name, e)
-            return
-        # verifica se la risposta e' 200 ok
-        if response.status_code != 200:
-            self.logger.err(self.sensor_name, "Login request status code {}".format(response.status_code))
-        # estrai il json
-        try:
-            response_json = response.json()
-        except json.JSONDecodeError as e:  # la risposta non ha un json
-            self.logger.err(self.sensor_name, e)
-            return
-        # verifica che la risposta sia ok
-        if not response_json["status"] or response_json["responseStatus"] != 200:  # non ok
-            self.configurations["pooling_rate"] = 60  # prossima richesta tra 60 secondi per sicurezza
-            self.logger.err(self.sensor_name, "Response status: {}".format(response_json["responseStatus"]))
-            self.logger.err(self.sensor_name, "Message: {}".format(response_json["message"]))
-            return
-        # estrai il token verificando che ci sia
-        if "token" not in response_json:
-            self.logger.err(self.sensor_name, "Login response doesn't contain the token")
-            return
-        token = response_json["token"]
-        # fai la seconda richiesta 'cicciona'
-        now_string = datetime.now().strftime('%Y%m%d')
-        total_pages = 1
-        actual_page = 1
-        while actual_page <= total_pages:
-            try:  # prova a fare la richiesta di dati
-                response = requests.post(
-                    url="{}retail/daily".format(self.configurations["base_url"]),
-                    headers={
-                        "X-API-Key": token
-                    },
-                    json={
-                        "date": now_string,
-                        "area": "INDOOR",
-                        "pdvId": -1,
-                        "page": actual_page,
-                        "dimensionsList": [
-                            "gender", "age", "nationality", "workDistance", "homeDistance", "visits",
-                            "visitors"
-                        ]
-                    }
-                )
-            except requests.RequestException as e:  # qualcosa è andato storto
-                self.logger.err(self.sensor_name, e)
-                return
-            # verifica se la risposta e' 200 ok
-            if response.status_code != 200:
-                self.logger.err(self.sensor_name, "Login request status code {}".format(response.status_code))
-            # estrai il json
-            try:
-                response_json = response.json()
-            except json.JSONDecodeError as e:  # la risposta non ha un json
-                self.logger.err(self.sensor_name, e)
-                return
-            # verifica che la risposta sia ok
-            if not response_json["status"] or response_json["responseStatus"] != 200:  # non ok
-                self.configurations["pooling_rate"] = 60  # prossima richesta tra 60 secondi per sicurezza
-                self.logger.err(self.sensor_name, "Response status: {}".format(response_json["responseStatus"]))
-                self.logger.err(self.sensor_name, "Message: {}".format(response_json["message"]))
-                return
-            total_pages = response_json["pages"]
-            # per ogni 'oggetto ritornato'
-            for val in response_json["data"]:
-                # calcola variabili semplici
-                self.transiti += val["visits"]
-                # calcola se ita o stranieri
-                if val["nationality"] == "ITALIANS":
-                    self.visitatori_italiani += val["visitors"]
-                else:
-                    self.visitatori_stranieri += val["visitors"]
-                # calcola sesso
-                if val["gender"] == "M":
-                    self.maschi += val["visitors"]
-                else:
-                    self.femmine += val["visitors"]
-                # calcola eta media
-                if val["age"] == "15-25":
-                    self.eta_media += 20 * val["visitors"]
-                elif val["age"] == "25-35":
-                    self.eta_media += 30 * val["visitors"]
-                elif val["age"] == "35-45":
-                    self.eta_media += 40 * val["visitors"]
-                elif val["age"] == "45-55":
-                    self.eta_media += 50 * val["visitors"]
-                elif val["age"] == "55-65":
-                    self.eta_media += 60 * val["visitors"]
-                elif val["age"] == ">65":
-                    self.eta_media += 70 * val["visitors"]
-                else:
-                    self.eta_media += 35 * val["visitors"]  # inserimento di un valore intermedio
-                # calcola distanza dal luogo di casa
-                if val["homeDistance"] == "000-010":
-                    self.distanza_casa_media += 5 * val["visitors"]
-                elif val["homeDistance"] == "010-020":
-                    self.distanza_casa_media += 15 * val["visitors"]
-                elif val["homeDistance"] == "020-030":
-                    self.distanza_casa_media += 25 * val["visitors"]
-                elif val["homeDistance"] == "030-040":
-                    self.distanza_casa_media += 35 * val["visitors"]
-                elif val["homeDistance"] == "040-050":
-                    self.distanza_casa_media += 45 * val["visitors"]
-                elif val["homeDistance"] == "50+":
-                    self.distanza_casa_media += 55 * val["visitors"]
-                else:
-                    self.distanza_casa_media += 30 * val["visitors"]  # inserimento di un valore intermedio
-                # calcola distanza dal luogo di lavoro
-                if val["workDistance"] == "000-010":
-                    self.distanza_lavoro_media += 5 * val["visitors"]
-                elif val["workDistance"] == "010-020":
-                    self.distanza_lavoro_media += 15 * val["visitors"]
-                elif val["workDistance"] == "020-030":
-                    self.distanza_lavoro_media += 25 * val["visitors"]
-                elif val["workDistance"] == "030-040":
-                    self.distanza_lavoro_media += 35 * val["visitors"]
-                elif val["workDistance"] == "040-050":
-                    self.distanza_lavoro_media += 45 * val["visitors"]
-                elif val["workDistance"] == "50+":
-                    self.distanza_lavoro_media += 55 * val["visitors"]
-                else:
-                    self.distanza_lavoro_media += 30 * val["visitors"]  # inserimento di un valore intermedio
-            actual_page += 1
-        # calcola la media complessiva
-        self.eta_media /= (self.visitatori_italiani + self.visitatori_stranieri)
-        self.distanza_lavoro_media /= (self.visitatori_italiani + self.visitatori_stranieri)
-        self.distanza_casa_media /= (self.visitatori_italiani + self.visitatori_stranieri)
-        # blocca la guardia
-        self.measurements_mutex.acquire()
-        # aggiorna le misurazioni
-        self.measurements = {
-            "visitatori_italiani": self.visitatori_italiani,
-            "visitatori_stranieri": self.visitatori_stranieri,
-            "transiti": self.transiti,
-            "maschi": self.maschi,
-            "femmine": self.femmine,
-            "eta_media": self.eta_media,
-            "distanza_lavoro_media": self.distanza_lavoro_media,
-            "distanza_casa_media": self.distanza_casa_media
-        }
-        # sblocca la guardia
-        self.measurements_mutex.release()
-        # avvisa che le misurazioni sono state ottenute correttamente
-        self.logger.info(self.sensor_name, "Got measurements correctly")
-        # reimposta il pooling_rate
-        self.configurations["pooling_rate"] = self.real_pooling_rate
-        # reimposta i dati
-        self.__reset_data()
-
-    def __bool__(self):
-        return True

@@ -28,16 +28,20 @@ class VodafoneClient(AbstractClient):
             # crea il json con le misurazioni
             json_measuremets = json.dumps(measurements)
             # send to thingsboard
-            self.client.publish(self.configurations["topic"], json_measuremets, self.configurations["qos"])
+            # self.client.publish(self.configurations["topic"], json_measuremets, self.configurations["qos"])
             # log
-            self.logger.info(self.client_name, json_measuremets)
+            self.logger.info(self.client_name, "Sent data to Thingsboard")
 
     def start(self):
-        if self.crowd_cell:
-            self.crowd_cell.start()
-            AbstractClient.start(self)
-        else:
-            self.logger.err(self.client_name, "The VodafoneCrowdCell doesn't work correctly")
+        AbstractClient.start(self)
+        self.crowd_cell.start()
+
+    def join(self, timeout=...):
+        AbstractClient.join(self)
+        self.crowd_cell.join()
+
+    def __bool__(self):
+        return AbstractClient.__bool__(self) and bool(self.crowd_cell)
 
 
 if __name__ == "__main__":

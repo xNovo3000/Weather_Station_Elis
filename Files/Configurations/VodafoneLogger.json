@@ -1,5 +1,5 @@
 {
-  "pooling_rate": 2,
+  "pooling_rate": 1,
   "write_to_terminal": true,
   "write_to_file": "Vodafone"
 }
