@@ -10,7 +10,7 @@ Author: NetcomGroup Innovation Team
 import os
 import simplejson as json
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # AMBIENT IMPORT
 from Utils.AbstractSensor import AbstractSensor
@@ -28,6 +28,13 @@ class VodafoneCrowdCell(AbstractSensor):
         AbstractSensor.__init__(self, "VodafoneCrowdCell")
         self.real_pooling_rate = self.configurations["pooling_rate"]
         self.__reset_data()
+
+    # FLOW DELL'APPLICAZIONE
+    # FASE 1: login e ottieni token
+    # FASE 2: ottieni dati sui pdv e ottieni pdv dell'ELIS
+    # FASE 3: verifica se i dati della settimana scorsa esistono
+    # FASE 4: per ogni giorno della settimana
+    #         -> ottieni i dati di ogni dimensione e inseriscili in self.measurements nel timestamp corrispondente
 
     def __reset_data(self):
         self.visitatori_totali = 0
@@ -80,66 +87,36 @@ class VodafoneCrowdCell(AbstractSensor):
         self.regione_veneto = 0
 
     def read(self):
+        pass
 
-        # FASE 1: LOGIN
+    # RITORNA VERO SE I DATI ESISTONO
+    def week_data_exists(self, pdv_id, token, date):
+        # ottieni l'anno e la settimana desiderata
+        week_number = date.isocalendar()[1]
+        # fai la richiesta
         response = requests.post(
-            url="{}/userbackend/login".format(self.configurations["base_url"]),
-            json={
-                "accessKey": self.configurations["access_key"],
-                "secretKey": self.configurations["secret_key"]
-            }
-        )
-        # estrai il json
-        body = response.json()
-        # verifica se il login è ok
-        if response.status_code != 200:
-            self.logger.warn(self.sensor_name, "Login response code: {}".format(response.status_code))
-            self.logger.warn(self.sensor_name, "Login response message: {}".format(body["message"]))
-            raise Exception(body["message"])
-        # logga il risultato
-        self.logger.info(self.sensor_name, "Login response code: {}".format(response.status_code))
-        self.logger.info(self.sensor_name, "Login response message: {}".format(body["message"]))
-        # estrai il token
-        token = body["token"]
-
-        # FASE 2: OTTIENI I DATI DI TUTTI I PDV DA VODAFONE
-        response = requests.post(
-            url="{}/retail/stores".format(self.configurations["base_url"]),
+            url="{}/retail/daily".format(self.configurations["base_url"]),
             headers={
                 "X-API-Key": token,
+            },
+            json={
+                "area": "OUTDOOR",
+                "pdvId": pdv_id,
+                "date": "{}{}".format(date.year, week_number),
+                "dimensionsList": ["gender"],
+                "filtersList": [],
+                "page": 1
             }
         )
-        # estrai il json
-        body = response.json()
-        # verifica se il login è ok
-        if response.status_code != 200:
-            self.logger.warn(self.sensor_name, "Stores response code: {}".format(response.status_code))
-            self.logger.warn(self.sensor_name, "Stores response message: {}".format(body["message"]))
-            raise Exception(body["message"])
-        # logga il risultato
-        self.logger.info(self.sensor_name, "Stores response code: {}".format(response.status_code))
-        self.logger.info(self.sensor_name, "Stores response message: {}".format(body["message"]))
-        # salva l'id del pdv
-        pdv_id = body["stores"][0]["id"]
+        # verifica la validità della risposta
+        body = self.check_response_and_get_body(response, "Week check")
+        # se c'è almeno una massa, ritorna true
+        if len(body["data"]) > 0:
+            return True
+        else:
+            return None
 
-        # FASE 3: VERIFICARE SE I DATI DELLA SETTIMANA ESISTONO
-
-    # def data_exists(self, week, pdv_id, token):
-    #     response = requests.post(
-    #         url="{}/retail/daily".format(self.configurations["base_url"]),
-    #         headers={
-    #             "X-API-Key": token,
-    #         },
-    #         json={
-    #             "area": "OUTDOOR",
-    #             "pdvId": pdv_id,
-    #             "date": date.strftime(VodafoneCrowdCell.__DATE_FORMAT),
-    #             "dimensionsList": [dimension],
-    #             "filtersList": [],
-    #             "page": current_page
-    #         }
-    #     )
-
+    # RITORNA TUTTE LE MASSE (ARRAY DI DIZIONARI)
     def get_data_from_dimension_and_date(self, dimension, date, pdv_id, token):
         current_page = 1
         total_pages = 1
@@ -161,31 +138,115 @@ class VodafoneCrowdCell(AbstractSensor):
                     "page": current_page
                 }
             )
-            # estrai il json
-            body = response.json()
-            # verifica se è ok
-            if response.status_code != 200:
-                self.logger.warn(self.sensor_name, "Data response code: {}".format(response.status_code))
-                self.logger.warn(self.sensor_name, "Data response message: {}".format(body["message"]))
-                raise Exception(body["message"])
-            # logga il risultato
-            self.logger.info(self.sensor_name, "Data response code: {}".format(response.status_code))
-            self.logger.info(self.sensor_name, "Data response message: {}".format(body["message"]))
+            # ottieni i dati
+            body = self.check_response_and_get_body(response, "Data")
             # aggiungi al risultato
             for item in body["data"]:
                 result.append(item)
         # ritorna il risultato
         return result
 
-    def dispatch_specific_dimension(self, dimension, list_of_items):
+    @classmethod
+    def dispatch_specific_dimension(cls, dimension, data):
         # genera il risultato
         result = {}
         # verifica ogni massa
-        for item in list_of_items:
+        for item in data:
             # null check
             if item[dimension] is None:
-                result["null"] = item["visitors"]
+                result["null"] += item["visitors"]
             else:
                 result[item[dimension]] = item["visitors"]
         # ritorna
         return result
+
+    @classmethod
+    def dispatch_dwell_visits_visitors(cls, data):
+        # il risultato
+        result = {
+            "visite": 0,
+            "visitatori_totali": 0,
+            "tempo_permanenza_medio": 0
+        }
+        # verifica ogni massa
+        for item in data:
+            result["visite"] += item["visits"]
+            result["visitatori_totali"] += item["visitors"]
+            result["tempo_permanenza_medio"] += item["totalDwellTime"]
+        # ritorna il risultato
+        return result
+
+    # VERIFICA SE LA RISPOSTA E' 200 OK E RITORNA IL BODY PARSANDOLO DA JSON
+    def check_response_and_get_body(self, response, name):
+        # estrai il json
+        body = response.json()
+        # verifica se è ok
+        if response.status_code != 200:
+            self.logger.warn(self.sensor_name, "{} response code: {}".format(name, response.status_code))
+            self.logger.warn(self.sensor_name, "{} response message: {}".format(name, body["message"]))
+            raise Exception(body["message"])
+        # logga il risultato
+        self.logger.info(self.sensor_name, "{} response code: {}".format(name, response.status_code))
+        self.logger.info(self.sensor_name, "{} response message: {}".format(name, body["message"]))
+        # ritorna il json
+        return body
+
+    # LOGIN: RITORNA IL TOKEN
+    def login(self):
+        # richiedi il login
+        response = requests.post(
+            url="{}/userbackend/login".format(self.configurations["base_url"]),
+            json={
+                "accessKey": self.configurations["access_key"],
+                "secretKey": self.configurations["secret_key"]
+            }
+        )
+        # estrai il json
+        body = self.check_response_and_get_body(response, "Login")
+        # estrai il token
+        return body["token"]
+
+    # RITORNA L'ID DEL PDV
+    def get_pdv(self, token):
+        response = requests.post(
+            url="{}/retail/stores".format(self.configurations["base_url"]),
+            headers={
+                "X-API-Key": token,
+            }
+        )
+        # estrai il json
+        body = self.check_response_and_get_body(response, "Stores")
+        # estrai l'id del pdv
+        return body["stores"][0]["id"]
+
+    # RITORNA I DATI PER IL GIORNO RICHIESTO
+    def get_day_data(self, date, pdv_id, token):
+        total_data = self.dispatch_dwell_visits_visitors(
+            self.get_data_from_dimension_and_date("gender", date, pdv_id, token)
+        )
+        gender_data = self.dispatch_specific_dimension(
+            "gender", self.get_data_from_dimension_and_date("gender", date, pdv_id, token)
+        )
+        age_data = self.dispatch_specific_dimension(
+            "age", self.get_data_from_dimension_and_date("age", date, pdv_id, token)
+        )
+        nationality_data = self.dispatch_specific_dimension(
+            "nationality", self.get_data_from_dimension_and_date("nationality", date, pdv_id, token)
+        )
+        work_distance_data = self.dispatch_specific_dimension(
+            "workDistance", self.get_data_from_dimension_and_date("workDistance", date, pdv_id, token)
+        )
+        home_distance_data = self.dispatch_specific_dimension(
+            "homeDistance", self.get_data_from_dimension_and_date("homeDistance", date, pdv_id, token)
+        )
+        region_data = self.dispatch_specific_dimension(
+            "region", self.get_data_from_dimension_and_date("region", date, pdv_id, token)
+        )
+
+        return {
+            "visitatori_maschi": gender_data["M"],
+            "visitatori_femmine": gender_data["F"],
+            "visitatori_italiani": nationality_data["ITALIANS"],
+            "visitatori_stranieri": nationality_data["FOREIGNERS"],
+            "visitatori_totali": gender_data["M"] + gender_data["F"] + gender_data["null"]
+        }
