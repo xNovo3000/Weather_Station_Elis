@@ -22,6 +22,8 @@ root_path = os.path.join(os.path.dirname(__file__), "Files", "FakeData")
 # VODAFONE CROWD CELL SENSOR
 class VodafoneCrowdCell(AbstractSensor):
 
+    __DATE_FORMAT = "%Y%M%d"
+
     def __init__(self):
         AbstractSensor.__init__(self, "VodafoneCrowdCell")
         self.real_pooling_rate = self.configurations["pooling_rate"]
@@ -48,7 +50,7 @@ class VodafoneCrowdCell(AbstractSensor):
         self.distanza_lavoro_40_50 = 0
         self.distanza_lavoro_50_plus = 0
         self.distanza_lavoro_media = 0
-        self.tempo_permanenza_medio = 0  # gmove dovrebbe dare dati più precisi, al momento li infilo lo stesso
+        self.tempo_permanenza_medio = 0  # gmove dovrebbe dare dati più precisi, al momento li passo lo stesso
         self.eta_15_25 = 0
         self.eta_25_35 = 0
         self.eta_35_45 = 0
@@ -93,7 +95,7 @@ class VodafoneCrowdCell(AbstractSensor):
         if response.status_code != 200:
             self.logger.warn(self.sensor_name, "Login response code: {}".format(response.status_code))
             self.logger.warn(self.sensor_name, "Login response message: {}".format(body["message"]))
-            return
+            raise Exception(body["message"])
         # logga il risultato
         self.logger.info(self.sensor_name, "Login response code: {}".format(response.status_code))
         self.logger.info(self.sensor_name, "Login response message: {}".format(body["message"]))
@@ -113,30 +115,77 @@ class VodafoneCrowdCell(AbstractSensor):
         if response.status_code != 200:
             self.logger.warn(self.sensor_name, "Stores response code: {}".format(response.status_code))
             self.logger.warn(self.sensor_name, "Stores response message: {}".format(body["message"]))
-            return
+            raise Exception(body["message"])
         # logga il risultato
         self.logger.info(self.sensor_name, "Stores response code: {}".format(response.status_code))
         self.logger.info(self.sensor_name, "Stores response message: {}".format(body["message"]))
         # salva l'id del pdv
         pdv_id = body["stores"][0]["id"]
 
-        # FASE 3: FARE LA RICHIESTA "REGINA" (solitamente è sempre una sola pagina ma non si sa mai)
+        # FASE 3: VERIFICARE SE I DATI DELLA SETTIMANA ESISTONO
+
+    # def data_exists(self, week, pdv_id, token):
+    #     response = requests.post(
+    #         url="{}/retail/daily".format(self.configurations["base_url"]),
+    #         headers={
+    #             "X-API-Key": token,
+    #         },
+    #         json={
+    #             "area": "OUTDOOR",
+    #             "pdvId": pdv_id,
+    #             "date": date.strftime(VodafoneCrowdCell.__DATE_FORMAT),
+    #             "dimensionsList": [dimension],
+    #             "filtersList": [],
+    #             "page": current_page
+    #         }
+    #     )
+
+    def get_data_from_dimension_and_date(self, dimension, date, pdv_id, token):
         current_page = 1
         total_pages = 1
+        result = []
+        # per ogni pagina
         while current_page <= total_pages:
+            # effettua la richiesta
             response = requests.post(
-                url="{}/retail/stores".format(self.configurations["base_url"]),
+                url="{}/retail/daily".format(self.configurations["base_url"]),
                 headers={
                     "X-API-Key": token,
                 },
                 json={
                     "area": "OUTDOOR",
                     "pdvId": pdv_id,
-                    "date": "<da inserire la data>",
-                    "dimensionsList": [
-                        "gender", "age", "nationality", "workDistance", "homeDistance"
-                    ],
+                    "date": date.strftime(VodafoneCrowdCell.__DATE_FORMAT),
+                    "dimensionsList": [dimension],
                     "filtersList": [],
                     "page": current_page
                 }
             )
+            # estrai il json
+            body = response.json()
+            # verifica se è ok
+            if response.status_code != 200:
+                self.logger.warn(self.sensor_name, "Data response code: {}".format(response.status_code))
+                self.logger.warn(self.sensor_name, "Data response message: {}".format(body["message"]))
+                raise Exception(body["message"])
+            # logga il risultato
+            self.logger.info(self.sensor_name, "Data response code: {}".format(response.status_code))
+            self.logger.info(self.sensor_name, "Data response message: {}".format(body["message"]))
+            # aggiungi al risultato
+            for item in body["data"]:
+                result.append(item)
+        # ritorna il risultato
+        return result
+
+    def dispatch_specific_dimension(self, dimension, list_of_items):
+        # genera il risultato
+        result = {}
+        # verifica ogni massa
+        for item in list_of_items:
+            # null check
+            if item[dimension] is None:
+                result["null"] = item["visitors"]
+            else:
+                result[item[dimension]] = item["visitors"]
+        # ritorna
+        return result
