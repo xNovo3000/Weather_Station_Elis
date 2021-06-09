@@ -1,6 +1,6 @@
 {
   "base_url": "https://api.analytics.vodafone.it/api",
-  "pooling_rate": 10,
+  "pooling_rate": 1,
   "logger": "VodafoneLogger",
   "access_key": "kt8zhvc61oRSNNPkHn3cSJ40WADPvolS",
   "secret_key": "8ZI8FjhhDib6npmYQYfTT3hLhRZSXbQD"

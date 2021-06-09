@@ -26,11 +26,13 @@ class VodafoneClient(AbstractClient):
         # manda su thingsboard
         if self.client.is_connected():
             # crea il json con le misurazioni
-            json_measuremets = json.dumps(measurements)
-            # send to thingsboard
-            # self.client.publish(self.configurations["topic"], json_measuremets, self.configurations["qos"])
-            # log
-            self.logger.info(self.client_name, "Sent data to Thingsboard")
+            json_measurements = json.dumps(measurements)
+            # verifica se l'array è pieno
+            if len(json_measurements) > 0:
+                # send to thingsboard
+                self.client.publish(self.configurations["topic"], json_measurements, self.configurations["qos"])
+                # log
+                self.logger.info(self.client_name, "Sent data to Thingsboard")
 
     def start(self):
         AbstractClient.start(self)
@@ -47,3 +49,4 @@ class VodafoneClient(AbstractClient):
 if __name__ == "__main__":
     x = VodafoneClient()
     x.start()
+    x.join()

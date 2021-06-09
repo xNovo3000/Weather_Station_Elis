@@ -2,6 +2,11 @@
 
 - NB: scrivere qui un resoconto di tutte le modifiche
 
+### 9 Giugno 2021
+- Terminata la base per il client Vodafone
+- Necessita dei test per capire se va bene o meno
+- I test devono durare due settimane minimo
+
 ### 7 Giugno 2021
 - Definizione dei nuovi KPI grezzi da inviare a Thingsboard
 - Branch allienato alla versione 1.2

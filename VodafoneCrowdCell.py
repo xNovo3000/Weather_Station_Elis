@@ -8,7 +8,6 @@ Author: NetcomGroup Innovation Team
 
 # PYTHON IMPORT
 import os
-import simplejson as json
 import requests
 from datetime import datetime, timedelta
 
@@ -26,68 +25,39 @@ class VodafoneCrowdCell(AbstractSensor):
 
     def __init__(self):
         AbstractSensor.__init__(self, "VodafoneCrowdCell")
-        self.real_pooling_rate = self.configurations["pooling_rate"]
-        self.__reset_data()
-
-    # FLOW DELL'APPLICAZIONE
-    # FASE 1: login e ottieni token
-    # FASE 2: ottieni dati sui pdv e ottieni pdv dell'ELIS
-    # FASE 3: verifica se i dati della settimana scorsa esistono
-    # FASE 4: per ogni giorno della settimana
-    #         -> ottieni i dati di ogni dimensione e inseriscili in self.measurements nel timestamp corrispondente
-
-    def __reset_data(self):
-        self.visitatori_totali = 0
-        self.visitatori_italiani = 0
-        self.visitatori_stranieri = 0
-        self.visitatori_maschi = 0
-        self.visitatori_femmine = 0  # non scrivo visitatrici per questioni di omogeneità delle chiavi
-        self.visite_totali = 0  # per le visite calcolo SOLO le totali
-        self.distanza_casa_0_10 = 0
-        self.distanza_casa_10_20 = 0
-        self.distanza_casa_20_30 = 0
-        self.distanza_casa_30_40 = 0
-        self.distanza_casa_40_50 = 0
-        self.distanza_casa_50_plus = 0
-        self.distanza_casa_media = 0
-        self.distanza_lavoro_0_10 = 0
-        self.distanza_lavoro_10_20 = 0
-        self.distanza_lavoro_20_30 = 0
-        self.distanza_lavoro_30_40 = 0
-        self.distanza_lavoro_40_50 = 0
-        self.distanza_lavoro_50_plus = 0
-        self.distanza_lavoro_media = 0
-        self.tempo_permanenza_medio = 0  # gmove dovrebbe dare dati più precisi, al momento li passo lo stesso
-        self.eta_15_25 = 0
-        self.eta_25_35 = 0
-        self.eta_35_45 = 0
-        self.eta_45_55 = 0
-        self.eta_55_65 = 0
-        self.eta_65_plus = 0
-        self.eta_media = 0
-        self.regione_abruzzo = 0
-        self.regione_basilicata = 0
-        self.regine_calabria = 0
-        self.regione_campania = 0
-        self.regione_emilia_romagna = 0
-        self.regione_friuli_venezia_giulia = 0
-        self.regione_lazio = 0
-        self.regione_liguria = 0
-        self.regione_lombardia = 0
-        self.regione_marche = 0
-        self.regione_molise = 0
-        self.regione_piemonte = 0
-        self.regione_puglia = 0
-        self.regione_sardegna = 0
-        self.regione_sicilia = 0
-        self.regione_toscana = 0
-        self.regione_trentino_alto_adige = 0
-        self.regione_umbria = 0
-        self.regione_valle_aosta = 0
-        self.regione_veneto = 0
+        self.measurements = []
 
     def read(self):
-        pass
+        # chiedi il login
+        tk = self.login()
+        # chiedi il pdv
+        pdv_id = self.get_pdv(tk)
+        # genera la data richiesta
+        seven_days_before = datetime.today() - timedelta(days=7)
+        # verifica se ci sono i dati
+        if self.week_data_exists(pdv_id, tk, seven_days_before):
+            # definisci l'ultimo lunedì
+            last_monday = datetime.today() - timedelta(weeks=1, days=datetime.today().weekday())
+            # ok, prendere i dati di ogni giorno della settimana e inserirli alle 12:00 del giorno stesso
+            for i in range(7):
+                # ottieni da data da richiedere a vodafone
+                choosen_date = (last_monday + timedelta(days=i)).replace(hour=12, minute=0, second=0, microsecond=0)
+                # richiedi i dati
+                result = self.get_day_data(choosen_date, pdv_id, tk)
+                # genera il timestamp
+                timestamp = choosen_date.timestamp()
+                # iniettalo nella lista delle misurazioni
+                self.measurements_mutex.acquire()
+                self.measurements.append({
+                    "ts": timestamp,
+                    "values": result
+                })
+                self.measurements_mutex.release()
+            # la prossima richiesta deve avvenire tra 7 giorni
+            self.configurations["pooling_rate"] = 604800
+        else:
+            # la prossima richiesta deve avvenire tra 1 giorno
+            self.configurations["pooling_rate"] = 86400
 
     # RITORNA VERO SE I DATI ESISTONO
     def week_data_exists(self, pdv_id, token, date):
@@ -176,7 +146,7 @@ class VodafoneCrowdCell(AbstractSensor):
         # ritorna il risultato
         return result
 
-    # VERIFICA SE LA RISPOSTA E' 200 OK E RITORNA IL BODY PARSANDOLO DA JSON
+    # VERIFICA SE LA RISPOSTA E' 200 OK E RITORNA IL BODY DA JSON A DICT/LIST
     def check_response_and_get_body(self, response, name):
         # estrai il json
         body = response.json()
@@ -242,11 +212,103 @@ class VodafoneCrowdCell(AbstractSensor):
         region_data = self.dispatch_specific_dimension(
             "region", self.get_data_from_dimension_and_date("region", date, pdv_id, token)
         )
-
         return {
             "visitatori_maschi": gender_data["M"],
             "visitatori_femmine": gender_data["F"],
             "visitatori_italiani": nationality_data["ITALIANS"],
             "visitatori_stranieri": nationality_data["FOREIGNERS"],
-            "visitatori_totali": gender_data["M"] + gender_data["F"] + gender_data["null"]
+            "visitatori_totali": total_data["visitatori_totali"],
+            "visite": total_data["visite"],
+            "tempo_permanenza_medio": total_data["tempo_permanenza_medio"],
+            "distanza_casa_0_10": home_distance_data["000-010"],
+            "distanza_casa_10_20": home_distance_data["010-020"],
+            "distanza_casa_20_30": home_distance_data["020-030"],
+            "distanza_casa_30_40": home_distance_data["030-040"],
+            "distanza_casa_40_50": home_distance_data["040-050"],
+            "distanza_casa_50_plus": home_distance_data["50+"],
+            "distanza_casa_media": self.get_weighted_distance_average(home_distance_data),
+            "distanza_lavoro_0_10": work_distance_data["000-010"],
+            "distanza_lavoro_10_20": work_distance_data["010-020"],
+            "distanza_lavoro_20_30": work_distance_data["020-030"],
+            "distanza_lavoro_30_40": work_distance_data["030-040"],
+            "distanza_lavoro_40_50": work_distance_data["040-050"],
+            "distanza_lavoro_50_plus": work_distance_data["50+"],
+            "distanza_lavoro_media": self.get_weighted_distance_average(work_distance_data),
+            "eta_15_25": age_data["[15-25]"],
+            "eta_25_35": age_data["(25-35]"],
+            "eta_35_45": age_data["(35-45]"],
+            "eta_45_55": age_data["(45-55]"],
+            "eta_55_65": age_data["(55-65]"],
+            "eta_65_plus": age_data[">65"],
+            "eta_media": self.get_weighted_age_average(age_data),
+            "regione_abruzzo": region_data["ABRUZZO"],
+            "regione_basilicata": region_data["BASILICATA"],
+            "regine_calabria": region_data["CALABRIA"],
+            "regione_campania": region_data["CAMPANIA"],
+            "regione_emilia_romagna": region_data["EMILIA_ROMAGNA"],
+            "regione_friuli_venezia_giulia": region_data["FRIULI_VENEZIA_GIULIA"],
+            "regione_lazio": region_data["LAZIO"],
+            "regione_liguria": region_data["LIGURIA"],
+            "regione_lombardia": region_data["LOMBARDIA"],
+            "regione_marche": region_data["MARCHE"],
+            "regione_molise": region_data["MOLISE"],
+            "regione_piemonte": region_data["PIEMONTE"],
+            "regione_puglia": region_data["PUGLIA"],
+            "regione_sardegna": region_data["SADEGNA"],
+            "regione_sicilia": region_data["SICILIA"],
+            "regione_toscana": region_data["TOSCANA"],
+            "regione_trentino_alto_adige": region_data["TRENTINO_ALTO_ADIGE"],
+            "regione_umbria": region_data["UMBRIA"],
+            "regione_valle_aosta": region_data["VAL_D_AOSTA"],  # TODO: verificare se è corretto
+            "regione_veneto": region_data["VENETO"],
         }
+
+    @classmethod
+    def get_weighted_distance_average(cls, distance_dict):
+        # genera già il risultato
+        result = 0.0
+        # per ogni presenza nel dizionario calcola la media pesata
+        for (key, value) in distance_dict.items():
+            if key == "000-010":
+                result += value * 5
+            elif key == "010-020":
+                result += value * 15
+            elif key == "020-030":
+                result += value * 25
+            elif key == "030-040":
+                result += value * 35
+            elif key == "040-050":
+                result += value * 45
+            elif key == "50+":
+                result += value * 55
+        # ritorna il risultato finale
+        return result
+
+    @classmethod
+    def get_weighted_age_average(cls, age_dict):
+        # genera già il risultato
+        result = 0.0
+        # per ogni presenza nel dizionario calcola la media pesata
+        for (key, value) in age_dict.items():
+            if key == "[15-25]":
+                result += value * 20
+            elif key == "(25-35]":
+                result += value * 30
+            elif key == "(35-45]":
+                result += value * 40
+            elif key == "(45-55]":
+                result += value * 50
+            elif key == "(55-65]":
+                result += value * 60
+            elif key == ">65":
+                result += value * 70
+        # ritorna il risultato finale
+        return result
+
+    # PULISCI LE MISURAZIONI UNA VOLTA LOGGATE SU THINGSBOARD
+    def get_measurements(self):
+        measurements = AbstractSensor.get_measurements(self)
+        self.measurements_mutex.acquire()
+        self.measurements.clear()
+        self.measurements_mutex.release()
+        return measurements
