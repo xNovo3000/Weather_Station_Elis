@@ -27,6 +27,9 @@ class AbstractSensor(Thread):
         self.measurements_mutex = Lock()
         self.configurations = Configs.load(sensor_name)
         self.logger = get_logger(self.configurations["logger"])
+        # retrocompatibilità
+        if "enabled" not in self.configurations:
+            self.configurations["enabled"] = True
 
     # METODO CHIAMATO OGNI [pooling_rate]
     def read(self):
@@ -52,18 +55,25 @@ class AbstractSensor(Thread):
     # RENDE ATTIVO IL SENSORE
     def start(self):
         self.valid = True
-        Thread.start(self)
+        if self.configurations["enabled"]:
+            Thread.start(self)
+        else:
+            self.logger.info(self.sensor_name, "Il sensore è stato disabilitato dal file di configurazione")
 
     # DISATTIVA IL SENSORE
     def join(self, timeout=...):
         self.valid = False
-        Thread.join(self)
+        if self.configurations["enabled"]:
+            Thread.join(self)
         destroy_logger(self.configurations["logger"])
 
     # OTTIENE LE ULTIME MISURAZIONI
     def get_measurements(self):
         self.measurements_mutex.acquire()
-        measurements = self.measurements.copy()
+        if self.configurations["enabled"]:
+            measurements = self.measurements.copy()
+        else:
+            measurements = {}
         self.measurements_mutex.release()
         return measurements
 

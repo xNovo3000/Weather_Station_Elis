@@ -6,6 +6,9 @@
 - Sembra andare tutto bene, è un miracolo
 - Aggiornata la codebase dal master
 
+### 11 Giugno 2021
+- Aggiunta la possibilità di disabilitare determinati sensori dai file json
+
 ### 9 Giugno 2021
 - Terminata la base per il client Vodafone
 - Necessita dei test per capire se va bene o meno
