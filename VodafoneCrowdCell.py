@@ -9,6 +9,7 @@ Author: NetcomGroup Innovation Team
 # PYTHON IMPORT
 import os
 import requests
+import pytz
 from datetime import datetime, timedelta
 
 # AMBIENT IMPORT
@@ -21,7 +22,7 @@ root_path = os.path.join(os.path.dirname(__file__), "Files", "FakeData")
 # VODAFONE CROWD CELL SENSOR
 class VodafoneCrowdCell(AbstractSensor):
 
-    __DATE_FORMAT = "%Y%M%d"
+    __DATE_FORMAT = "%Y%m%d"
 
     def __init__(self):
         AbstractSensor.__init__(self, "VodafoneCrowdCell")
@@ -30,22 +31,28 @@ class VodafoneCrowdCell(AbstractSensor):
     def read(self):
         # chiedi il login
         tk = self.login()
+        self.logger.debug(self.sensor_name, "Token: {}".format(tk))
         # chiedi il pdv
         pdv_id = self.get_pdv(tk)
+        self.logger.debug(self.sensor_name, "PDV ID: {}".format(pdv_id))
         # genera la data richiesta
-        seven_days_before = datetime.today() - timedelta(days=7)
+        seven_days_before = datetime.now(pytz.utc) - timedelta(days=7)
+        self.logger.debug(self.sensor_name, "Requested timestamp: {}".format(seven_days_before))
         # verifica se ci sono i dati
         if self.week_data_exists(pdv_id, tk, seven_days_before):
             # definisci l'ultimo lunedì
-            last_monday = datetime.today() - timedelta(weeks=1, days=datetime.today().weekday())
+            last_monday = datetime.now(pytz.utc) - timedelta(weeks=1, days=datetime.now(pytz.utc).weekday())
+            self.logger.debug(self.sensor_name, "Last monday: {}".format(last_monday))
             # ok, prendere i dati di ogni giorno della settimana e inserirli alle 12:00 del giorno stesso
             for i in range(7):
                 # ottieni da data da richiedere a vodafone
                 choosen_date = (last_monday + timedelta(days=i)).replace(hour=12, minute=0, second=0, microsecond=0)
+                self.logger.debug(self.sensor_name, "Choosen date: {}".format(choosen_date))
                 # richiedi i dati
                 result = self.get_day_data(choosen_date, pdv_id, tk)
+                self.logger.debug(self.sensor_name, "Weekday {} results: {}".format(i + 1, result))
                 # genera il timestamp
-                timestamp = choosen_date.timestamp()
+                timestamp = choosen_date.astimezone().timestamp() * 1000
                 # iniettalo nella lista delle misurazioni
                 self.measurements_mutex.acquire()
                 self.measurements.append({
@@ -53,19 +60,27 @@ class VodafoneCrowdCell(AbstractSensor):
                     "values": result
                 })
                 self.measurements_mutex.release()
-            # la prossima richiesta deve avvenire tra 7 giorni
-            self.configurations["pooling_rate"] = 604800
+            # la prossima richiesta deve avvenire tra 7 giorni meno 10 minuti
+            self.configurations["pooling_rate"] = 604800 - 600
         else:
-            # la prossima richiesta deve avvenire tra 1 giorno
-            self.configurations["pooling_rate"] = 86400
+            # la prossima richiesta deve avvenire tra 1 giorno meno 10 minuti
+            self.configurations["pooling_rate"] = 86400 - 600
+        # logga quando ci sarà la prossima iterazione
+        self.logger.debug(
+            self.sensor_name,
+            "Sleep mode, next iteration in {} seconds".format(self.configurations["pooling_rate"])
+        )
 
     # RITORNA VERO SE I DATI ESISTONO
     def week_data_exists(self, pdv_id, token, date):
+        # genera l'url
+        url = "{}/retail/weekly".format(self.configurations["base_url"])
+        self.logger.debug(self.sensor_name, "Requesting weekly data from {}".format(url))
         # ottieni l'anno e la settimana desiderata
         week_number = date.isocalendar()[1]
         # fai la richiesta
         response = requests.post(
-            url="{}/retail/daily".format(self.configurations["base_url"]),
+            url=url,
             headers={
                 "X-API-Key": token,
             },
@@ -80,19 +95,26 @@ class VodafoneCrowdCell(AbstractSensor):
         )
         # verifica la validità della risposta
         body = self.check_response_and_get_body(response, "Week check")
+        # logga il risultato ottenuto
+        self.logger.debug(self.sensor_name, body)
         # se c'è almeno una massa, ritorna true
         if len(body["data"]) > 0:
+            self.logger.debug(self.sensor_name, "Body data len > 0")
             return True
         else:
+            self.logger.debug(self.sensor_name, "Body data len < 0")
             return None
 
     # RITORNA TUTTE LE MASSE (ARRAY DI DIZIONARI)
     def get_data_from_dimension_and_date(self, dimension, date, pdv_id, token):
+        self.logger.debug(self.sensor_name, "Getting data from dimension {}".format(dimension))
         current_page = 1
         total_pages = 1
         result = []
         # per ogni pagina
         while current_page <= total_pages:
+            # logga la pagina corrente sulle totali
+            self.logger.debug(self.sensor_name, "Current page: {} - Total pages: {}".format(current_page, total_pages))
             # effettua la richiesta
             response = requests.post(
                 url="{}/retail/daily".format(self.configurations["base_url"]),
@@ -113,13 +135,19 @@ class VodafoneCrowdCell(AbstractSensor):
             # aggiungi al risultato
             for item in body["data"]:
                 result.append(item)
+            current_page += 1
         # ritorna il risultato
         return result
 
-    @classmethod
-    def dispatch_specific_dimension(cls, dimension, data):
+    # @classmethod
+    def dispatch_specific_dimension(self, dimension, data):
+        # logga la dimensione e i dati
+        self.logger.debug(self.sensor_name, "Data: {}".format(data))
+        self.logger.debug(self.sensor_name, "Dimension: {}".format(dimension))
         # genera il risultato
-        result = {}
+        result = {
+            "null": 0
+        }
         # verifica ogni massa
         for item in data:
             # null check
@@ -158,21 +186,27 @@ class VodafoneCrowdCell(AbstractSensor):
         # logga il risultato
         self.logger.info(self.sensor_name, "{} response code: {}".format(name, response.status_code))
         self.logger.info(self.sensor_name, "{} response message: {}".format(name, body["message"]))
+        # logga il body
+        self.logger.debug(self.sensor_name, body)
         # ritorna il json
         return body
 
     # LOGIN: RITORNA IL TOKEN
     def login(self):
+        # genera l'url per il login e loggalo
+        url = "{}/userbackend/login".format(self.configurations["base_url"])
+        self.logger.debug(self.sensor_name, url)
         # richiedi il login
         response = requests.post(
-            url="{}/userbackend/login".format(self.configurations["base_url"]),
+            url=url,
             json={
                 "accessKey": self.configurations["access_key"],
                 "secretKey": self.configurations["secret_key"]
             }
         )
-        # estrai il json
+        # estrai il json e loggalo
         body = self.check_response_and_get_body(response, "Login")
+        self.logger.debug(self.sensor_name, body)
         # estrai il token
         return body["token"]
 
@@ -213,54 +247,54 @@ class VodafoneCrowdCell(AbstractSensor):
             "region", self.get_data_from_dimension_and_date("region", date, pdv_id, token)
         )
         return {
-            "visitatori_maschi": gender_data["M"],
-            "visitatori_femmine": gender_data["F"],
-            "visitatori_italiani": nationality_data["ITALIANS"],
-            "visitatori_stranieri": nationality_data["FOREIGNERS"],
-            "visitatori_totali": total_data["visitatori_totali"],
-            "visite": total_data["visite"],
-            "tempo_permanenza_medio": total_data["tempo_permanenza_medio"],
-            "distanza_casa_0_10": home_distance_data["000-010"],
-            "distanza_casa_10_20": home_distance_data["010-020"],
-            "distanza_casa_20_30": home_distance_data["020-030"],
-            "distanza_casa_30_40": home_distance_data["030-040"],
-            "distanza_casa_40_50": home_distance_data["040-050"],
-            "distanza_casa_50_plus": home_distance_data["50+"],
+            "visitatori_maschi": gender_data.get("M", 0),
+            "visitatori_femmine": gender_data.get("F", 0),
+            "visitatori_italiani": nationality_data.get("ITALIANS", 0),
+            "visitatori_stranieri": nationality_data.get("FOREIGNERS", 0),
+            "visitatori_totali": total_data.get("visitatori_totali", 0),
+            "visite": total_data.get("visite", 0),
+            "tempo_permanenza_medio": total_data.get("tempo_permanenza_medio", 0),
+            "distanza_casa_0_10": home_distance_data.get("000-010", 0),
+            "distanza_casa_10_20": home_distance_data.get("010-020", 0),
+            "distanza_casa_20_30": home_distance_data.get("020-030", 0),
+            "distanza_casa_30_40": home_distance_data.get("030-040", 0),
+            "distanza_casa_40_50": home_distance_data.get("040-050", 0),
+            "distanza_casa_50_plus": home_distance_data.get("50+", 0),
             "distanza_casa_media": self.get_weighted_distance_average(home_distance_data),
-            "distanza_lavoro_0_10": work_distance_data["000-010"],
-            "distanza_lavoro_10_20": work_distance_data["010-020"],
-            "distanza_lavoro_20_30": work_distance_data["020-030"],
-            "distanza_lavoro_30_40": work_distance_data["030-040"],
-            "distanza_lavoro_40_50": work_distance_data["040-050"],
-            "distanza_lavoro_50_plus": work_distance_data["50+"],
+            "distanza_lavoro_0_10": work_distance_data.get("000-010", 0),
+            "distanza_lavoro_10_20": work_distance_data.get("010-020", 0),
+            "distanza_lavoro_20_30": work_distance_data.get("020-030", 0),
+            "distanza_lavoro_30_40": work_distance_data.get("030-040", 0),
+            "distanza_lavoro_40_50": work_distance_data.get("040-050", 0),
+            "distanza_lavoro_50_plus": work_distance_data.get("50+", 0),
             "distanza_lavoro_media": self.get_weighted_distance_average(work_distance_data),
-            "eta_15_25": age_data["[15-25]"],
-            "eta_25_35": age_data["(25-35]"],
-            "eta_35_45": age_data["(35-45]"],
-            "eta_45_55": age_data["(45-55]"],
-            "eta_55_65": age_data["(55-65]"],
-            "eta_65_plus": age_data[">65"],
+            "eta_15_25": age_data.get("[15-25]", 0),
+            "eta_25_35": age_data.get("(25-35]", 0),
+            "eta_35_45": age_data.get("(35-45]", 0),
+            "eta_45_55": age_data.get("(45-55]", 0),
+            "eta_55_65": age_data.get("(55-65]", 0),
+            "eta_65_plus": age_data.get(">65", 0),
             "eta_media": self.get_weighted_age_average(age_data),
-            "regione_abruzzo": region_data["ABRUZZO"],
-            "regione_basilicata": region_data["BASILICATA"],
-            "regine_calabria": region_data["CALABRIA"],
-            "regione_campania": region_data["CAMPANIA"],
-            "regione_emilia_romagna": region_data["EMILIA_ROMAGNA"],
-            "regione_friuli_venezia_giulia": region_data["FRIULI_VENEZIA_GIULIA"],
-            "regione_lazio": region_data["LAZIO"],
-            "regione_liguria": region_data["LIGURIA"],
-            "regione_lombardia": region_data["LOMBARDIA"],
-            "regione_marche": region_data["MARCHE"],
-            "regione_molise": region_data["MOLISE"],
-            "regione_piemonte": region_data["PIEMONTE"],
-            "regione_puglia": region_data["PUGLIA"],
-            "regione_sardegna": region_data["SADEGNA"],
-            "regione_sicilia": region_data["SICILIA"],
-            "regione_toscana": region_data["TOSCANA"],
-            "regione_trentino_alto_adige": region_data["TRENTINO_ALTO_ADIGE"],
-            "regione_umbria": region_data["UMBRIA"],
-            "regione_valle_aosta": region_data["VAL_D_AOSTA"],  # TODO: verificare se è corretto
-            "regione_veneto": region_data["VENETO"],
+            "regione_abruzzo": region_data.get("ABRUZZO", 0),
+            "regione_basilicata": region_data.get("BASILICATA", 0),
+            "regine_calabria": region_data.get("CALABRIA", 0),
+            "regione_campania": region_data.get("CAMPANIA", 0),
+            "regione_emilia_romagna": region_data.get("EMILIA-ROMAGNA", 0),
+            "regione_friuli_venezia_giulia": region_data.get("FRIULI-VENEZIA GIULIA", 0),
+            "regione_lazio": region_data.get("LAZIO", 0),
+            "regione_liguria": region_data.get("LIGURIA", 0),
+            "regione_lombardia": region_data.get("LOMBARDIA", 0),
+            "regione_marche": region_data.get("MARCHE", 0),
+            "regione_molise": region_data.get("MOLISE", 0),
+            "regione_piemonte": region_data.get("PIEMONTE", 0),
+            "regione_puglia": region_data.get("PUGLIA", 0),
+            "regione_sardegna": region_data.get("SADEGNA", 0),
+            "regione_sicilia": region_data.get("SICILIA", 0),
+            "regione_toscana": region_data.get("TOSCANA", 0),
+            "regione_trentino_alto_adige": region_data.get("TRENTINO-ALTO ADIGE/SUDTIROL", 0),
+            "regione_umbria": region_data.get("UMBRIA", 0),
+            "regione_valle_aosta": region_data.get("VALLE D'AOSTA/VALLE'E D'AOSTE", 0),
+            "regione_veneto": region_data.get("VENETO", 0),
         }
 
     @classmethod
@@ -288,8 +322,12 @@ class VodafoneCrowdCell(AbstractSensor):
     def get_weighted_age_average(cls, age_dict):
         # genera già il risultato
         result = 0.0
+        weight = 0
         # per ogni presenza nel dizionario calcola la media pesata
         for (key, value) in age_dict.items():
+            # aggiungi il peso
+            weight += value
+            # calcola
             if key == "[15-25]":
                 result += value * 20
             elif key == "(25-35]":
@@ -303,7 +341,7 @@ class VodafoneCrowdCell(AbstractSensor):
             elif key == ">65":
                 result += value * 70
         # ritorna il risultato finale
-        return result
+        return result / weight
 
     # PULISCI LE MISURAZIONI UNA VOLTA LOGGATE SU THINGSBOARD
     def get_measurements(self):

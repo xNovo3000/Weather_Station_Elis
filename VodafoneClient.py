@@ -21,10 +21,11 @@ class VodafoneClient(AbstractClient):
         self.crowd_cell = VodafoneCrowdCell()
 
     def publish(self):
-        # ottieni le misurazioni
+        # ottieni le misurazioni e loggale per vedere se è tutto ok
         measurements = self.crowd_cell.get_measurements()
+        self.logger.debug(self.client_name, measurements)
         # manda su thingsboard
-        if self.client.is_connected():
+        if self.client.is_connected() and len(measurements) > 0:
             # crea il json con le misurazioni
             json_measurements = json.dumps(measurements)
             # verifica se l'array è pieno
@@ -33,6 +34,9 @@ class VodafoneClient(AbstractClient):
                 self.client.publish(self.configurations["topic"], json_measurements, self.configurations["qos"])
                 # log
                 self.logger.info(self.client_name, "Sent data to Thingsboard")
+        else:
+            # non ci sono state misurazioni
+            self.logger.info(self.client, "No measurements")
 
     def start(self):
         AbstractClient.start(self)

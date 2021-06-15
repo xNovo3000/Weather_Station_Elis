@@ -2,6 +2,10 @@
 
 - NB: scrivere qui un resoconto di tutte le modifiche
 
+### 15 Giugno 2021
+- Sembra andare tutto bene, è un miracolo
+- Aggiornata la codebase dal master
+
 ### 9 Giugno 2021
 - Terminata la base per il client Vodafone
 - Necessita dei test per capire se va bene o meno
