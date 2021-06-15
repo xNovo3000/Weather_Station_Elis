@@ -5,6 +5,7 @@
 ### 15 Giugno 2021
 - Sembra andare tutto bene, è un miracolo
 - Aggiornata la codebase dal master
+- La venv non era attiva (grazie PyCharm)
 
 ### 11 Giugno 2021
 - Aggiunta la possibilità di disabilitare determinati sensori dai file json
