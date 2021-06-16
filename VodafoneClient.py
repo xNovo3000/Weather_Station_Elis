@@ -27,14 +27,17 @@ class VodafoneClient(AbstractClient):
         self.logger.debug(self.client_name, measurements)
         # manda su thingsboard
         if self.client.is_connected() and len(measurements) > 0:
-            # crea il json con le misurazioni
-            json_measurements = json.dumps(measurements)
-            # verifica se l'array è pieno
-            if len(json_measurements) > 0:
-                # send to thingsboard
-                self.client.publish(self.configurations["topic"], json_measurements, self.configurations["qos"])
-                # log
-                self.logger.info(self.client_name, "Sent data to Thingsboard")
+            # measurements è una lista non più un dizionario
+            # quindi si deve fare questa operazione per ogni elemento
+            for item in measurements:
+                # crea il json con le misurazioni
+                json_measurements = json.dumps(item)
+                # verifica se l'array è pieno
+                if len(json_measurements) > 0:
+                    # send to thingsboard
+                    self.client.publish(self.configurations["topic"], json_measurements, self.configurations["qos"])
+                    # log
+                    self.logger.info(self.client_name, "Sent data to Thingsboard")
         else:
             # non ci sono state misurazioni
             self.logger.info(self.client, "No measurements")

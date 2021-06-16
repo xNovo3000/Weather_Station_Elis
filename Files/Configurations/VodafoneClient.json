@@ -4,7 +4,7 @@
   "token": "BlXHtJmXDt7XMDNYzp6v",
   "topic": "v1/devices/me/telemetry",
   "keep_alive": 60,
-  "publish_time": 600,
+  "publish_time": 60,
   "qos": 1,
   "subscribe_path": "v1/devices/me/attributes/response/+",
   "logger": "VodafoneLogger"
