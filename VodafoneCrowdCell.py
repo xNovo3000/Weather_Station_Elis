@@ -301,8 +301,12 @@ class VodafoneCrowdCell(AbstractSensor):
     def get_weighted_distance_average(cls, distance_dict):
         # genera già il risultato
         result = 0.0
+        weight = 0
         # per ogni presenza nel dizionario calcola la media pesata
         for (key, value) in distance_dict.items():
+            # aggiungi il peso
+            weight += value
+            # calcola
             if key == "000-010":
                 result += value * 5
             elif key == "010-020":
@@ -316,7 +320,7 @@ class VodafoneCrowdCell(AbstractSensor):
             elif key == "50+":
                 result += value * 55
         # ritorna il risultato finale
-        return result
+        return result / weight
 
     @classmethod
     def get_weighted_age_average(cls, age_dict):
