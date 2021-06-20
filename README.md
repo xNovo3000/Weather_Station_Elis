@@ -2,6 +2,9 @@
 
 - NB: scrivere qui un resoconto di tutte le modifiche
 
+### 20 Giugno 2021
+- Aggiunto un sistema in grado di scansionare la temperatura della CPU
+
 ### 15 Giugno 2021
 - Sembra andare tutto bene, è un miracolo
 - Aggiornata la codebase dal master

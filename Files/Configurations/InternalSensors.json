@@ -1,0 +1,4 @@
+{
+  "pooling_rate": 10,
+  "logger": "InternalLogger"
+}
