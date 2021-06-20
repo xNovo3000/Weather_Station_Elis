@@ -1,0 +1,14 @@
+{
+  "pooling_rate": 1,
+  "terminal": {
+    "enabled": false,
+    "level": 10
+  },
+  "file": {
+    "enabled": true,
+    "level": 20,
+    "name": "Internal",
+    "max_bytes": 2097152,
+    "backup_count": 1
+  }
+}
