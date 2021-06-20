@@ -7,16 +7,12 @@ Author: NetcomGroup Innovation Team
 """
 
 # PYTHON IMPORT
-import os
 import requests
 import pytz
 from datetime import datetime, timedelta
 
 # AMBIENT IMPORT
 from Utils.AbstractSensor import AbstractSensor
-
-# GET ROOT PATH
-root_path = os.path.join(os.path.dirname(__file__), "Files", "FakeData")
 
 
 # VODAFONE CROWD CELL SENSOR
@@ -60,12 +56,6 @@ class VodafoneCrowdCell(AbstractSensor):
                     "values": result
                 })
                 self.measurements_mutex.release()
-            # la prossima richiesta deve avvenire tra 7 giorni meno 10 minuti
-            self.configurations["pooling_rate"] = 604800 - 600
-        else:
-            # la prossima richiesta deve avvenire tra 1 giorno meno 10 minuti
-            self.configurations["pooling_rate"] = 86400 - 600
-        # logga quando ci sarà la prossima iterazione
         self.logger.debug(
             self.sensor_name,
             "Sleep mode, next iteration in {} seconds".format(self.configurations["pooling_rate"])
