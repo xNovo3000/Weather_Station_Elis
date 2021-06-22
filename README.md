@@ -2,6 +2,10 @@
 
 - NB: scrivere qui un resoconto di tutte le modifiche
 
+### 22 Giugno 2021
+- La crowd cell adesso può prendere indoor oppure outdoor
+- Adesso vengono caricati sia i risultati di Vodafone indoor che quelli outdoor
+
 ### 20 Giugno 2021
 - Aggiunto un sistema in grado di scansionare la temperatura della CPU
 

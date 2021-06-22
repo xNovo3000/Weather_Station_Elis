@@ -15,11 +15,11 @@ from Utils.AbstractClient import AbstractClient
 from VodafoneCrowdCell import VodafoneCrowdCell
 
 
-class VodafoneClient(AbstractClient):
+class VodafoneIndoorClient(AbstractClient):
 
     def __init__(self):
-        AbstractClient.__init__(self, "VodafoneClient")
-        self.crowd_cell = VodafoneCrowdCell()
+        AbstractClient.__init__(self, "VodafoneIndoorClient")
+        self.crowd_cell = VodafoneCrowdCell("INDOOR")
 
     def publish(self):
         # ottieni le misurazioni e loggale per vedere se è tutto ok
@@ -55,6 +55,6 @@ class VodafoneClient(AbstractClient):
 
 
 if __name__ == "__main__":
-    x = VodafoneClient()
+    x = VodafoneIndoorClient()
     x.start()
     x.join()

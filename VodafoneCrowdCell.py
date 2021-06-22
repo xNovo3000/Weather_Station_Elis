@@ -20,8 +20,9 @@ class VodafoneCrowdCell(AbstractSensor):
 
     __DATE_FORMAT = "%Y%m%d"
 
-    def __init__(self):
+    def __init__(self, data_type):
         AbstractSensor.__init__(self, "VodafoneCrowdCell")
+        self.data_type = data_type
         self.measurements = []
 
     def read(self):
@@ -32,12 +33,12 @@ class VodafoneCrowdCell(AbstractSensor):
         pdv_id = self.get_pdv(tk)
         self.logger.debug(self.sensor_name, "PDV ID: {}".format(pdv_id))
         # genera la data richiesta
-        seven_days_before = datetime.now(pytz.utc) - timedelta(days=7)
+        seven_days_before = datetime.now(pytz.utc) - timedelta(days=14)
         self.logger.debug(self.sensor_name, "Requested timestamp: {}".format(seven_days_before))
         # verifica se ci sono i dati
         if self.week_data_exists(pdv_id, tk, seven_days_before):
             # definisci l'ultimo lunedì
-            last_monday = datetime.now(pytz.utc) - timedelta(weeks=1, days=datetime.now(pytz.utc).weekday())
+            last_monday = datetime.now(pytz.utc) - timedelta(weeks=2, days=datetime.now(pytz.utc).weekday())
             self.logger.debug(self.sensor_name, "Last monday: {}".format(last_monday))
             # ok, prendere i dati di ogni giorno della settimana e inserirli alle 12:00 del giorno stesso
             for i in range(7):
@@ -75,7 +76,7 @@ class VodafoneCrowdCell(AbstractSensor):
                 "X-API-Key": token,
             },
             json={
-                "area": "OUTDOOR",
+                "area": self.data_type,
                 "pdvId": pdv_id,
                 "date": "{}{}".format(date.year, week_number),
                 "dimensionsList": ["gender"],
@@ -112,7 +113,7 @@ class VodafoneCrowdCell(AbstractSensor):
                     "X-API-Key": token,
                 },
                 json={
-                    "area": "OUTDOOR",
+                    "area": self.data_type,
                     "pdvId": pdv_id,
                     "date": date.strftime(VodafoneCrowdCell.__DATE_FORMAT),
                     "dimensionsList": [dimension],
@@ -140,6 +141,9 @@ class VodafoneCrowdCell(AbstractSensor):
         }
         # verifica ogni massa
         for item in data:
+            # type check
+            if isinstance(item["visitors"], str):
+                continue
             # null check
             if item[dimension] is None:
                 result["null"] += item["visitors"]
@@ -310,7 +314,10 @@ class VodafoneCrowdCell(AbstractSensor):
             elif key == "50+":
                 result += value * 55
         # ritorna il risultato finale
-        return result / weight
+        if weight == 0:
+            return 0
+        else:
+            return result / weight
 
     @classmethod
     def get_weighted_age_average(cls, age_dict):
@@ -335,7 +342,10 @@ class VodafoneCrowdCell(AbstractSensor):
             elif key == ">65":
                 result += value * 70
         # ritorna il risultato finale
-        return result / weight
+        if weight == 0:
+            return 0
+        else:
+            return result / weight
 
     # PULISCI LE MISURAZIONI UNA VOLTA LOGGATE SU THINGSBOARD
     def get_measurements(self):

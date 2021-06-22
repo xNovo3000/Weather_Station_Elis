@@ -1,0 +1,17 @@
+[Unit]
+Description=Vodafone Indoor client autorun service
+Wants=network-online.target
+After=nss-lookup.target
+
+[Service]
+User=pi
+ExecStart=/usr/bin/python3 /home/pi/Weather_Station_Elis/VodafoneIndoorClient.py
+WorkingDirectory=/home/pi/Weather_Station_Elis
+Restart=always
+RestartSec=15
+TimeoutSec=30
+# bruttissimo, ma funziona bene solo così
+ExecStartPre=/bin/bash -c 'until host example.com; do sleep 1; done'
+
+[Install]
+WantedBy=multi-user.target

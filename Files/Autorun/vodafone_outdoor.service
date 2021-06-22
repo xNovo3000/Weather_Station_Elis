@@ -1,11 +1,11 @@
 [Unit]
-Description=Vodafone Crowd Cell client autorun service
+Description=Vodafone Outdoor client autorun service
 Wants=network-online.target
 After=nss-lookup.target
 
 [Service]
 User=pi
-ExecStart=/usr/bin/python3 /home/pi/Weather_Station_Elis/VodafoneClient.py
+ExecStart=/usr/bin/python3 /home/pi/Weather_Station_Elis/VodafoneOutdoorClient.py
 WorkingDirectory=/home/pi/Weather_Station_Elis
 Restart=always
 RestartSec=15
