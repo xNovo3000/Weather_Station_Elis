@@ -2,6 +2,11 @@
 
 - NB: scrivere qui un resoconto di tutte le modifiche
 
+### 23 Giugno 2021
+- Risolto un problema con AbstractSensor e AbstractClient: adesso se c'è un errore vengono subito interrotti e non attendono più che termini il wait del thread
+- Aggiornato Vodafone con i nuovi token di Thingsboard
+- Adesso i logger sono a livello 10 e non più 20
+
 ### 22 Giugno 2021
 - La crowd cell adesso può prendere indoor oppure outdoor
 - Adesso vengono caricati sia i risultati di Vodafone indoor che quelli outdoor

@@ -6,7 +6,7 @@
   },
   "file": {
     "enabled": true,
-    "level": 20,
+    "level": 10,
     "name": "Internal",
     "max_bytes": 2097152,
     "backup_count": 1

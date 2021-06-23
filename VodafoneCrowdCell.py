@@ -33,12 +33,12 @@ class VodafoneCrowdCell(AbstractSensor):
         pdv_id = self.get_pdv(tk)
         self.logger.debug(self.sensor_name, "PDV ID: {}".format(pdv_id))
         # genera la data richiesta
-        seven_days_before = datetime.now(pytz.utc) - timedelta(days=14)
+        seven_days_before = datetime.now(pytz.utc) - timedelta(days=7)
         self.logger.debug(self.sensor_name, "Requested timestamp: {}".format(seven_days_before))
         # verifica se ci sono i dati
         if self.week_data_exists(pdv_id, tk, seven_days_before):
             # definisci l'ultimo lunedì
-            last_monday = datetime.now(pytz.utc) - timedelta(weeks=2, days=datetime.now(pytz.utc).weekday())
+            last_monday = datetime.now(pytz.utc) - timedelta(weeks=1, days=datetime.now(pytz.utc).weekday())
             self.logger.debug(self.sensor_name, "Last monday: {}".format(last_monday))
             # ok, prendere i dati di ogni giorno della settimana e inserirli alle 12:00 del giorno stesso
             for i in range(7):

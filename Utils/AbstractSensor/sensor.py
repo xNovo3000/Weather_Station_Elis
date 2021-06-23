@@ -45,6 +45,7 @@ class AbstractSensor(Thread):
             except Exception as e:
                 self.logger.err(self.sensor_name, e)  # stampa l'errore ricevuto
                 self.valid = False  # invalida il sensore
+                continue  # termina a priori l'esecuzione senza passare dal via
             end = time.time()
             if (end - begin) < self.configurations["pooling_rate"]:
                 time.sleep(self.configurations["pooling_rate"] - (end - begin))
