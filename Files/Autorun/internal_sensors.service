@@ -10,6 +10,7 @@ WorkingDirectory=/home/pi/Weather_Station_Elis
 Restart=always
 RestartSec=15
 TimeoutSec=30
+WatchdogSec=86400
 # bruttissimo, ma funziona bene solo così
 ExecStartPre=/bin/bash -c 'until host example.com; do sleep 1; done'
 
