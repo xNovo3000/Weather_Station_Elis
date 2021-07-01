@@ -23,7 +23,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         AbstractSensor.__init__(self, "VodafoneEnhancedCrowdCell")
         self.area_name = area_name
         self.date_format = "%Y%m%d"
-        self.dimensions = ["age", "gender", "nationality", "homeDistance", "workDistance"]
+        self.dimensions = ["age", "gender", "nationality", "homeDistance", "workDistance", "region", "municipality"]
         self.measurements = []
         if area_name == "INDOOR":
             self.device_id = self.configurations["indoor_device_id"]
@@ -95,6 +95,8 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
             raise ConnectionError("Risposta ricevuta con errore. Codice: {}. Messaggio: {}".format(
                 response.status_code, response.text
             ))
+        # TODO: only testing! Remove before in-production
+        return datetime.now() - timedelta(days=21)
         # dispatch
         json_response = response.json()
         if json_response["visite"][0]["value"] is not None:
@@ -174,7 +176,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
             macro_container = {
                 "visitatori": 0,
                 "visite": 0,
-                "tempo_permanenza": 0,
+                "tempo_medio_permanenza": 0,
             }
             self.logger.debug(self.sensor_name, "Verifico la presenza di dati per la data {}".format(timestamp))
             # generate request
@@ -208,7 +210,9 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
                 # get all data
                 macro_container["visite"] += data["visits"]
                 macro_container["visitatori"] += data["visitors"]
-                macro_container["tempo_permanenza"] += data["totalDwellTime"]
+                macro_container["tempo_medio_permanenza"] += data["totalDwellTime"]
+            # normalize "totalDwellTime"
+            macro_container["tempo_medio_permanenza"] /= macro_container["visitatori"]
             # do this for every dimension
             for dimension in self.dimensions:
                 # print choosen dimension
@@ -218,7 +222,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
                 total_pages = 1
                 # do this for every page
                 while actual_page <= total_pages:
-                    self.logger.debug(self.sensor_name, "Invio richieste a: {}".format(request_url))
+                    self.logger.debug(self.sensor_name, "Invio richiesta a: {}".format(request_url))
                     # generate request
                     response = requests.post(
                         url=request_url,
@@ -262,7 +266,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
 
     def phase_5_dispatch(self, dimension, array_data):
         # log
-        self.logger.debug(self.sensor_name, "Dispatching {} with data {}".format(dimension, array_data))
+        self.logger.debug(self.sensor_name, "Spacchetto {}. Dati grezzi: {}".format(dimension, array_data))
         # check dimension and redirect to the function
         if dimension == "gender":
             return self.phase_5_dispatch_gender(array_data)
@@ -274,6 +278,10 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
             return self.phase_5_dispatch_distance(array_data, "casa", "homeDistance")
         elif dimension == "workDistance":
             return self.phase_5_dispatch_distance(array_data, "lavoro", "workDistance")
+        elif dimension == "region":
+            return self.phase_5_dispatch_region(array_data)
+        elif dimension == "municipality":
+            return self.phase_5_dispatch_municipality(array_data)
         else:
             raise NotImplementedError("Invalid dimension")
 
@@ -389,6 +397,92 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
             container["distanza_{}_media".format(spot)] = total / weight
         return container
 
+    @classmethod
+    def phase_5_dispatch_region(cls, array_data):
+        container = {
+            "regione_abruzzo": 0,
+            "regione_basilicata": 0,
+            "regione_calabria": 0,
+            "regione_campania": 0,
+            "regione_emilia_romagna": 0,
+            "regione_friuli_venezia_giulia": 0,
+            "regione_lazio": 0,
+            "regione_liguria": 0,
+            "regione_lombardia": 0,
+            "regione_marche": 0,
+            "regione_molise": 0,
+            "regione_piemonte": 0,
+            "regione_puglia": 0,
+            "regione_sardegna": 0,
+            "regione_sicilia": 0,
+            "regione_toscana": 0,
+            "regione_trentino_alto_adige": 0,
+            "regione_umbria": 0,
+            "regione_valle_aosta": 0,
+            "regione_veneto": 0,
+        }
+        for data in array_data:
+            if isinstance(data["visitors"], str):  # "*" avoider
+                continue
+            if data["region"] is not None:
+                if data["region"] == "ABRUZZO":
+                    container["regione_abruzzo"] += data["visitors"]
+                elif data["region"] == "BASILICATA":
+                    container["regione_basilicata"] += data["visitors"]
+                elif data["region"] == "CALABRIA":
+                    container["regione_calabria"] += data["visitors"]
+                elif data["region"] == "CAMPANIA":
+                    container["regione_campania"] += data["visitors"]
+                elif data["region"] == "EMILIA-ROMAGNA":
+                    container["regione_emilia_romagna"] += data["visitors"]
+                elif data["region"] == "FRIULI-VENEZIA GIULIA":
+                    container["regione_friuli_venezia_giulia"] += data["visitors"]
+                elif data["region"] == "LAZIO":
+                    container["regione_lazio"] += data["visitors"]
+                elif data["region"] == "LIGURIA":
+                    container["regione_liguria"] += data["visitors"]
+                elif data["region"] == "LOMBARDIA":
+                    container["regione_lombardia"] += data["visitors"]
+                elif data["region"] == "MARCHE":
+                    container["regione_marche"] += data["visitors"]
+                elif data["region"] == "MOLISE":
+                    container["regione_molise"] += data["visitors"]
+                elif data["region"] == "PIEMONTE":
+                    container["regione_piemonte"] += data["visitors"]
+                elif data["region"] == "PUGLIA":
+                    container["regione_puglia"] += data["visitors"]
+                elif data["region"] == "SARDEGNA":
+                    container["regione_sardegna"] += data["visitors"]
+                elif data["region"] == "SICILIA":
+                    container["regione_sicilia"] += data["visitors"]
+                elif data["region"] == "TOSCANA":
+                    container["regione_toscana"] += data["visitors"]
+                elif data["region"] == "TRENTINO-ALTO ADIGE/SUDTIROL":
+                    container["regione_trentino_alto_adige"] += data["visitors"]
+                elif data["region"] == "UMBRIA":
+                    container["regione_umbria"] += data["visitors"]
+                elif data["region"] == "VALLE D'AOSTA/VALLE'E D'AOSTE":
+                    container["regione_valle_aosta"] += data["visitors"]
+                else:  # "VENETO"
+                    container["regione_veneto"] += data["visitors"]
+        return container
+
+    @classmethod
+    def phase_5_dispatch_municipality(cls, array_data):
+        container = {
+            "citta_roma": 0,
+            "citta_fuori_roma": 0,
+        }
+        for data in array_data:
+            if isinstance(data["visitors"], str):  # "*" avoider
+                continue
+            if data["municipality"] is not None:
+                if data["municipality"] == "ROMA":
+                    container["citta_roma"] += data["visitors"]
+                else:
+                    container["citta_fuori_roma"] += data["visitors"]
+        return container
+
     # PULISCI LE MISURAZIONI UNA VOLTA LOGGATE SU THINGSBOARD
     def get_measurements(self):
         measurements = AbstractSensor.get_measurements(self)
@@ -396,3 +490,9 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         self.measurements.clear()
         self.measurements_mutex.release()
         return measurements
+
+
+if __name__ == "__main__":
+    x = VodafoneEnhancedCrowdCell("INDOOR")
+    x.start()
+    x.join()
