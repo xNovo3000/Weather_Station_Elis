@@ -96,15 +96,17 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
                 response.status_code, response.text
             ))
         # TODO: only testing! Remove before in-production
-        return datetime.now() - timedelta(days=21)
         # dispatch
         json_response = response.json()
         if json_response["visite"][0]["value"] is not None:
             self.logger.debug(self.sensor_name, "Ci sono dati. Inizio dal giorno successivo")
             return datetime.fromtimestamp(json_response["visite"][0]["ts"] / 1000) + timedelta(days=1)
         else:  # 90 giorni prima
-            self.logger.debug(self.sensor_name, "Non ci sono dati. Inizierò da 90 giorni prima")
-            return datetime.now() - timedelta(days=60)
+            self.logger.debug(
+                self.sensor_name,
+                "Non ci sono dati. Inizierò da {} giorni prima".format(self.configurations["days_back"])
+            )
+            return datetime.now() - timedelta(days=self.configurations["days_back"])
 
     def phase_3(self):
         # phase 3 begin
@@ -255,12 +257,14 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
                     # increase page number
                     actual_page += 1
             # save data
+            self.measurements_mutex.acquire()
             self.measurements.append({
                 "ts": timestamp.astimezone(pytz.utc).replace(
                     hour=12, minute=0, second=0, microsecond=0
                 ).timestamp() * 1000,
                 "values": macro_container
             })
+            self.measurements_mutex.release()
             # add one day to timestamp
             timestamp += timedelta(days=1)
 
