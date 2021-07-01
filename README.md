@@ -4,6 +4,7 @@
 
 ### 1 Luglio 2021
 - Inserito l'account e prove finali
+- Inseriti i nuovi token
 
 ### 30 Giugno 2021
 - Iniziata la costruzione del sistema di transmissione dati di Vodafone migliorato
