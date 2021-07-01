@@ -12,14 +12,14 @@ import simplejson as json
 
 # AMBIENT IMPORT
 from Utils.AbstractClient import AbstractClient
-from VodafoneCrowdCell import VodafoneCrowdCell
+from VodafoneEnhancedCrowdCell import VodafoneEnhancedCrowdCell
 
 
 class VodafoneIndoorClient(AbstractClient):
 
     def __init__(self):
         AbstractClient.__init__(self, "VodafoneIndoorClient")
-        self.crowd_cell = VodafoneCrowdCell("INDOOR")
+        self.crowd_cell = VodafoneEnhancedCrowdCell("INDOOR")
 
     def publish(self):
         # ottieni le misurazioni e loggale per vedere se è tutto ok
