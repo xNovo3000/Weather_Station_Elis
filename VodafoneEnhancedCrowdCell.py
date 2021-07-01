@@ -28,7 +28,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         if area_name == "INDOOR":
             self.device_id = self.configurations["indoor_device_id"]
         else:
-            self.device_id = self.configurations["outoor_device_id"]
+            self.device_id = self.configurations["outdoor_device_id"]
 
     def read(self):
         # FASE 1 -> effettua il login a Thingsboard
@@ -494,9 +494,3 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         self.measurements.clear()
         self.measurements_mutex.release()
         return measurements
-
-
-if __name__ == "__main__":
-    x = VodafoneEnhancedCrowdCell("INDOOR")
-    x.start()
-    x.join()

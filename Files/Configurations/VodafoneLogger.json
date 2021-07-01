@@ -1,7 +1,7 @@
 {
   "pooling_rate": 1,
   "terminal": {
-    "enabled": true,
+    "enabled": false,
     "level": 10
   },
   "file": {
