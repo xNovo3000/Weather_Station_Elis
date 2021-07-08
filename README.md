@@ -2,6 +2,9 @@
 
 - NB: scrivere qui un resoconto di tutte le modifiche
 
+### 8 Luglio 2021
+- Disabilitate le verifiche SSL per Vodafone (grazie eh)
+
 ### 1 Luglio 2021
 - Inserito l'account e prove finali
 - Inseriti i nuovi token
