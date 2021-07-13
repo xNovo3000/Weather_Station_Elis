@@ -40,7 +40,7 @@ class VodafoneOutdoorClient(AbstractClient):
                     self.logger.info(self.client_name, "Sent data to Thingsboard")
         else:
             # non ci sono state misurazioni
-            self.logger.info(self.client, "No measurements")
+            self.logger.info(self.client_name, "No measurements")
 
     def start(self):
         AbstractClient.start(self)

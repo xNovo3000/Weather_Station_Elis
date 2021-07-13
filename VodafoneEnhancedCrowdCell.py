@@ -42,14 +42,14 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         # FASE 5 -> usando il timestamp e il pdv chiedi dati fino ad oggi
         #        -> per ogni dato ricevuto, inseriscilo in self.measurements
         self.phase_5(vodafone_token, pdv_id, timestamp)
-        self.logger.info(self.sensor_name, self.measurements)
+        self.logger.info(self.sensor_name + "-" + self.area_name, self.measurements)
 
     def phase_1(self):
         # phase 1 begin
-        self.logger.debug(self.sensor_name, "Inizio fase 1")
+        self.logger.debug(self.sensor_name + "-" + self.area_name, "Inizio fase 1")
         # generate url
         request_url = "https://{}/api/auth/login".format(self.configurations["host"])
-        self.logger.debug(self.sensor_name, "Invio richiesta a: {}".format(request_url))
+        self.logger.debug(self.sensor_name + "-" + self.area_name, "Invio richiesta a: {}".format(request_url))
         # generate request
         response = requests.post(url=request_url, json={
             "username": self.configurations["username"],
@@ -57,7 +57,9 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         })
         # check response
         if response.status_code == 200:
-            self.logger.debug(self.sensor_name, "Risposta ricevuta con successo".format(response.status_code))
+            self.logger.debug(
+                self.sensor_name + "-" + self.area_name, "Risposta ricevuta con successo".format(response.status_code)
+            )
         else:
             raise ConnectionError("Risposta ricevuta con errore. Codice: {}. Messaggio: {}".format(
                 response.status_code, response.text
@@ -66,18 +68,18 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         json_response = response.json()
         if "token" in json_response:
             token = json_response["token"]
-            self.logger.debug(self.sensor_name, "Token Thingsboard: {}".format(token))
+            self.logger.debug(self.sensor_name + "-" + self.area_name, "Token Thingsboard: {}".format(token))
             return token
         else:
             raise ValueError("Token non presente nella risposta")
 
     def phase_2(self, thingsboard_token):
         # phase 2 begin
-        self.logger.debug(self.sensor_name, "Inizio fase 2")
+        self.logger.debug(self.sensor_name + "-" + self.area_name, "Inizio fase 2")
         # generate url
         request_url = "https://{}/api/plugins/telemetry/DEVICE/{}/values/timeseries"\
             .format(self.configurations["host"], self.device_id)
-        self.logger.debug(self.sensor_name, "Invio richiesta a: {}".format(request_url))
+        self.logger.debug(self.sensor_name + "-" + self.area_name, "Invio richiesta a: {}".format(request_url))
         # generate request
         response = requests.get(
             url=request_url,
@@ -90,7 +92,9 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         )
         # check response
         if response.status_code == 200:
-            self.logger.debug(self.sensor_name, "Risposta ricevuta con successo".format(response.status_code))
+            self.logger.debug(
+                self.sensor_name + "-" + self.area_name, "Risposta ricevuta con successo".format(response.status_code)
+            )
         else:
             raise ConnectionError("Risposta ricevuta con errore. Codice: {}. Messaggio: {}".format(
                 response.status_code, response.text
@@ -99,21 +103,21 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         # dispatch
         json_response = response.json()
         if json_response["visite"][0]["value"] is not None:
-            self.logger.debug(self.sensor_name, "Ci sono dati. Inizio dal giorno successivo")
+            self.logger.debug(self.sensor_name + "-" + self.area_name, "Ci sono dati. Inizio dal giorno successivo")
             return datetime.fromtimestamp(json_response["visite"][0]["ts"] / 1000) + timedelta(days=1)
         else:  # 90 giorni prima
             self.logger.debug(
-                self.sensor_name,
+                self.sensor_name + "-" + self.area_name,
                 "Non ci sono dati. Inizierò da {} giorni prima".format(self.configurations["days_back"])
             )
             return datetime.now() - timedelta(days=self.configurations["days_back"])
 
     def phase_3(self):
         # phase 3 begin
-        self.logger.debug(self.sensor_name, "Inizio fase 3")
+        self.logger.debug(self.sensor_name + "-" + self.area_name, "Inizio fase 3")
         # generate url
         request_url = "{}/userbackend/login".format(self.configurations["base_url"])
-        self.logger.debug(self.sensor_name, "Invio richiesta a: {}".format(request_url))
+        self.logger.debug(self.sensor_name + "-" + self.area_name, "Invio richiesta a: {}".format(request_url))
         # generate request
         response = requests.post(
             url=request_url,
@@ -124,7 +128,10 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         )
         # check response
         if response.status_code == 200:
-            self.logger.debug(self.sensor_name, "Risposta ricevuta con successo".format(response.status_code))
+            self.logger.debug(
+                self.sensor_name + "-" + self.area_name,
+                "Risposta ricevuta con successo".format(response.status_code)
+            )
         else:
             raise ConnectionError("Risposta ricevuta con errore. Codice: {}. Messaggio: {}".format(
                 response.status_code, response.text
@@ -133,17 +140,17 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         json_response = response.json()
         if "token" in json_response:
             token = json_response["token"]
-            self.logger.debug(self.sensor_name, "Token Vodafone: {}".format(token))
+            self.logger.debug(self.sensor_name + "-" + self.area_name, "Token Vodafone: {}".format(token))
             return token
         else:
             raise ValueError("Token non presente nella risposta")
 
     def phase_4(self, vodafone_token):
         # phase 4 begin
-        self.logger.debug(self.sensor_name, "Inizio fase 4")
+        self.logger.debug(self.sensor_name + "-" + self.area_name, "Inizio fase 4")
         # generate url
         request_url = "{}/retail/stores".format(self.configurations["base_url"])
-        self.logger.debug(self.sensor_name, "Invio richiesta a: {}".format(request_url))
+        self.logger.debug(self.sensor_name + "-" + self.area_name, "Invio richiesta a: {}".format(request_url))
         # generate request
         response = requests.post(
             url=request_url,
@@ -153,7 +160,9 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         )
         # check response
         if response.status_code == 200:
-            self.logger.debug(self.sensor_name, "Risposta ricevuta con successo".format(response.status_code))
+            self.logger.debug(
+                self.sensor_name + "-" + self.area_name, "Risposta ricevuta con successo".format(response.status_code)
+            )
         else:
             raise ConnectionError("Risposta ricevuta con errore. Codice: {}. Messaggio: {}".format(
                 response.status_code, response.text
@@ -162,14 +171,14 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         json_response = response.json()
         if len(json_response["stores"]) > 0:
             pdv_id = json_response["stores"][0]["id"]
-            self.logger.debug(self.sensor_name, "ID PDV: {}".format(pdv_id))
+            self.logger.debug(self.sensor_name + "-" + self.area_name, "ID PDV: {}".format(pdv_id))
             return pdv_id
         else:
             raise ValueError("Nessun PDV registrato")
 
     def phase_5(self, vodafone_token, pdv_id, timestamp):
         # phase 5 begin
-        self.logger.debug(self.sensor_name, "Inizio fase 5")
+        self.logger.debug(self.sensor_name + "-" + self.area_name, "Inizio fase 5")
         # generate url
         request_url = "{}/retail/daily".format(self.configurations["base_url"])
         # for every day
@@ -180,7 +189,9 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
                 "visite": 0,
                 "tempo_medio_permanenza": 0,
             }
-            self.logger.debug(self.sensor_name, "Verifico la presenza di dati per la data {}".format(timestamp))
+            self.logger.debug(
+                self.sensor_name + "-" + self.area_name, "Verifico la presenza di dati per la data {}".format(timestamp)
+            )
             # generate request
             response = requests.post(
                 url=request_url,
@@ -198,7 +209,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
             )
             # check response
             if response.status_code == 200:
-                self.logger.debug(self.sensor_name, "Risposta ricevuta con successo")
+                self.logger.debug(self.sensor_name + "-" + self.area_name, "Risposta ricevuta con successo")
             else:
                 raise ConnectionError("Risposta ricevuta con errore. Codice: {}. Messaggio: {}".format(
                     response.status_code, response.text
@@ -206,8 +217,13 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
             # dispatch
             json_response = response.json()
             if json_response["pages"] == 0:
-                self.logger.debug(self.sensor_name, "Non sembrano esserci dati")
-                break
+                self.logger.debug(self.sensor_name + "-" + self.area_name, "Non sembrano esserci dati")
+                if timestamp < datetime.now():
+                    timestamp += timedelta(days=1)
+                    self.logger.debug(self.sensor_name + "-" + self.area_name, "Passo al giorno successivo")
+                    continue
+                else:
+                    break
             for data in json_response["data"]:
                 # get all data
                 macro_container["visite"] += data["visits"]
@@ -218,13 +234,17 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
             # do this for every dimension
             for dimension in self.dimensions:
                 # print choosen dimension
-                self.logger.debug(self.sensor_name, "Dimensione selezionata: {}".format(dimension))
+                self.logger.debug(
+                    self.sensor_name + "-" + self.area_name, "Dimensione selezionata: {}".format(dimension)
+                )
                 # init page numbers
                 actual_page = 1
                 total_pages = 1
                 # do this for every page
                 while actual_page <= total_pages:
-                    self.logger.debug(self.sensor_name, "Invio richiesta a: {}".format(request_url))
+                    self.logger.debug(
+                        self.sensor_name + "-" + self.area_name, "Invio richiesta a: {}".format(request_url)
+                    )
                     # generate request
                     response = requests.post(
                         url=request_url,
@@ -243,7 +263,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
                     # check response
                     if response.status_code == 200:
                         self.logger.debug(
-                            self.sensor_name,
+                            self.sensor_name + "-" + self.area_name,
                             "Risposta ricevuta con successo".format(response.status_code)
                         )
                     else:
@@ -270,7 +290,9 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
 
     def phase_5_dispatch(self, dimension, array_data):
         # log
-        self.logger.debug(self.sensor_name, "Spacchetto {}. Dati grezzi: {}".format(dimension, array_data))
+        self.logger.debug(
+            self.sensor_name + "-" + self.area_name, "Spacchetto {}. Dati grezzi: {}".format(dimension, array_data)
+        )
         # check dimension and redirect to the function
         if dimension == "gender":
             return self.phase_5_dispatch_gender(array_data)

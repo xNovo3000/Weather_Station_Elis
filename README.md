@@ -2,6 +2,12 @@
 
 - NB: scrivere qui un resoconto di tutte le modifiche
 
+### 13 Luglio 2021
+- Vodafone adesso va fino alla data di oggi per ricevere i dati
+- Risolto un problema con il logger
+- Risulto un problema con il client outdoor
+- Rimosso ufficialmente il branch gmove perché G-move se ne occuperà di persona
+
 ### 1 Luglio 2021
 - Inserito l'account e prove finali
 - Inseriti i nuovi token
