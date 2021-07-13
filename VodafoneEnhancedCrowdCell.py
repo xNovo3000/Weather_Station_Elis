@@ -8,8 +8,8 @@ Author: NetcomGroup Innovation Team
 
 # PYTHON IMPORT
 from datetime import datetime, timedelta
+
 import pytz
-import urllib3
 import requests
 
 # AMBIENT IMPORT
@@ -29,8 +29,6 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
             self.device_id = self.configurations["indoor_device_id"]
         else:
             self.device_id = self.configurations["outdoor_device_id"]
-        # [urllib3] disable SSL warnings
-        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     def read(self):
         # FASE 1 -> effettua il login a Thingsboard
@@ -55,8 +53,8 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         # generate request
         response = requests.post(url=request_url, json={
             "username": self.configurations["username"],
-            "password": self.configurations["password"],
-        }, verify=False)
+            "password": self.configurations["password"]
+        })
         # check response
         if response.status_code == 200:
             self.logger.debug(self.sensor_name, "Risposta ricevuta con successo".format(response.status_code))
@@ -88,8 +86,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
             },
             params={
                 "keys": "visite"
-            },
-            verify=False
+            }
         )
         # check response
         if response.status_code == 200:
@@ -98,6 +95,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
             raise ConnectionError("Risposta ricevuta con errore. Codice: {}. Messaggio: {}".format(
                 response.status_code, response.text
             ))
+        # TODO: only testing! Remove before in-production
         # dispatch
         json_response = response.json()
         if json_response["visite"][0]["value"] is not None:
@@ -123,7 +121,6 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
                 "accessKey": self.configurations["access_key"],
                 "secretKey": self.configurations["secret_key"]
             },
-            verify=False
         )
         # check response
         if response.status_code == 200:
@@ -152,8 +149,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
             url=request_url,
             headers={
                 "X-API-Key": vodafone_token
-            },
-            verify=False
+            }
         )
         # check response
         if response.status_code == 200:
@@ -198,8 +194,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
                     "dimensionsList": ["gender"],
                     "filtersList": [],
                     "page": 1
-                },
-                verify=False
+                }
             )
             # check response
             if response.status_code == 200:
@@ -243,8 +238,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
                             "dimensionsList": [dimension],
                             "filtersList": [],
                             "page": 1
-                        },
-                        verify=False
+                        }
                     )
                     # check response
                     if response.status_code == 200:
