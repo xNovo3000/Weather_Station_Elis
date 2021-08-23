@@ -77,7 +77,7 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
         # phase 2 begin
         self.logger.debug(self.sensor_name + "-" + self.area_name, "Inizio fase 2")
         # generate url
-        request_url = "https://{}/api/plugins/telemetry/DEVICE/{}/values/timeseries"\
+        request_url = "https://{}/api/plugins/telemetry/DEVICE/{}/values/timeseries" \
             .format(self.configurations["host"], self.device_id)
         self.logger.debug(self.sensor_name + "-" + self.area_name, "Invio richiesta a: {}".format(request_url))
         # generate request
@@ -226,9 +226,15 @@ class VodafoneEnhancedCrowdCell(AbstractSensor):
                     break
             for data in json_response["data"]:
                 # get all data
-                macro_container["visite"] += data["visits"]
-                macro_container["visitatori"] += data["visitors"]
-                macro_container["tempo_medio_permanenza"] += data["totalDwellTime"]
+                if isinstance(data["visits"], str) or isinstance(data["visitors"], str) or \
+                        isinstance(data["totalDwellTime"], str):  # "*" avoider
+                    macro_container["visite"] += 9
+                    macro_container["visitatori"] += 9
+                    macro_container["tempo_medio_permanenza"] += 9
+                else:
+                    macro_container["visite"] += data["visits"]
+                    macro_container["visitatori"] += data["visitors"]
+                    macro_container["tempo_medio_permanenza"] += data["totalDwellTime"]
             # normalize "totalDwellTime"
             macro_container["tempo_medio_permanenza"] /= macro_container["visitatori"]
             # do this for every dimension

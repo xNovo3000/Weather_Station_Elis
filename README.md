@@ -2,6 +2,9 @@
 
 - NB: scrivere qui un resoconto di tutte le modifiche
 
+### 23 Agosto 2021
+- Risolto un problema con "*" da parte di Vodafone
+
 ### 13 Luglio 2021
 - Vodafone adesso va fino alla data di oggi per ricevere i dati
 - Risolto un problema con il logger
