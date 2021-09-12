@@ -2,6 +2,9 @@
 
 - NB: scrivere qui un resoconto di tutte le modifiche
 
+### 12 Settembre 2021
+- Adesso i dati di Vodafone sono passati per cluster ed elaborati da client
+
 ### 23 Agosto 2021
 - Risolto un problema con "*" da parte di Vodafone
 
