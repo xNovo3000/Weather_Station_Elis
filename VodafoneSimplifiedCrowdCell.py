@@ -21,7 +21,7 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
         AbstractSensor.__init__(self, "VodafoneSimplifiedCrowdCell")
         self.date_format = "%Y%m%d"
         self.dimensions = ["age", "gender", "nationality", "homeDistance", "country",
-                           "workDistance", "region", "municipality", "zip", "province"]
+                           "workDistance", "region", "municipality", "province"]
         self.measurements = []
         self.area = area
         if area == "INDOOR":
