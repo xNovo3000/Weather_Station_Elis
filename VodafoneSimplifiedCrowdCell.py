@@ -187,6 +187,8 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
             self.logger.debug(
                 self.sensor_name, "Verifico la presenza di dati {} per la data {}".format(self.area, timestamp)
             )
+            # delta seconds
+            delta_seconds = 0
             # generate INDOOR request
             response = requests.post(
                 url=request_url,
@@ -236,6 +238,7 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
                 data.pop("pdvName")
                 # generate ts
                 ts = timestamp.astimezone(pytz.utc).replace(hour=12, minute=0, second=0, microsecond=0)
+                ts += timedelta(seconds=delta_seconds)
                 # add to the measurements
                 self.measurements_mutex.acquire()
                 self.measurements.append({
@@ -243,6 +246,8 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
                     "values": data
                 })
                 self.measurements_mutex.release()
+                # increase
+                delta_seconds += 1
             # add one day to timestamp
             timestamp += timedelta(days=1)
 
