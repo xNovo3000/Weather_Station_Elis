@@ -2,8 +2,6 @@
 # encoding: UTF-8
 
 """
-Version: Vodafone-0.01
-Updated: 17/05/2021
 Author: NetcomGroup Innovation Team
 """
 
@@ -12,14 +10,14 @@ import simplejson as json
 
 # AMBIENT IMPORT
 from Utils.AbstractClient import AbstractClient
-from VodafoneEnhancedCrowdCell import VodafoneEnhancedCrowdCell
+from VodafoneSimplifiedCrowdCell import VodafoneSimplifiedCrowdCell
 
 
 class VodafoneOutdoorClient(AbstractClient):
 
     def __init__(self):
         AbstractClient.__init__(self, "VodafoneOutdoorClient")
-        self.crowd_cell = VodafoneEnhancedCrowdCell("OUTDOOR")
+        self.crowd_cell = VodafoneSimplifiedCrowdCell("OUTDOOR")
 
     def publish(self):
         # ottieni le misurazioni e loggale per vedere se è tutto ok
