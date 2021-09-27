@@ -5,8 +5,8 @@
   "logger": "VodafoneLogger",
   "access_key": "kt8zhvc61oRSNNPkHn3cSJ40WADPvolS",
   "secret_key": "8ZI8FjhhDib6npmYQYfTT3hLhRZSXbQD",
-  "indoor_device_id": "8d72c560-1f95-11ec-9897-7bc96f715841",
-  "outdoor_device_id": "94000460-1f95-11ec-9897-7bc96f715841",
+  "indoor_device_id": "d3c0e680-1f97-11ec-9897-7bc96f715841",
+  "outdoor_device_id": "d78122d0-1f97-11ec-9897-7bc96f715841",
   "username": "elisgroup@elis.org",
   "password": "elisgroup",
   "days_back": 180

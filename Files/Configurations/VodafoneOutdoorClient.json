@@ -1,7 +1,7 @@
 {
   "host": "iothings.netcomgroup.eu",
   "port": 1883,
-  "token": "tkpxvneE9A1z1L8NSk7x",
+  "token": "UfdaMKFhucFX8tpSEl8D",
   "topic": "v1/devices/me/telemetry",
   "keep_alive": 60,
   "publish_time": 60,

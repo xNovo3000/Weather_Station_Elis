@@ -199,7 +199,7 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
                     "area": self.area,
                     "pdvId": pdv_id,
                     "date": timestamp.strftime(self.date_format),
-                    "dimensionsList": ["gender"],
+                    "dimensionsList": self.dimensions,
                     "filtersList": [],
                     "page": 1
                 }
