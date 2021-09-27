@@ -18,7 +18,7 @@ from Utils.AbstractSensor import AbstractSensor
 class VodafoneSimplifiedCrowdCell(AbstractSensor):
 
     def __init__(self, area):
-        AbstractSensor.__init__(self, "VodafoneSimplifiedCrowdCell-" + area)
+        AbstractSensor.__init__(self, "VodafoneSimplifiedCrowdCell")
         self.date_format = "%Y%m%d"
         self.dimensions = ["age", "gender", "nationality", "homeDistance", "country",
                            "workDistance", "region", "municipality", "province"]
