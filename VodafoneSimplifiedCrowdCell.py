@@ -18,7 +18,7 @@ from Utils.AbstractSensor import AbstractSensor
 class VodafoneSimplifiedCrowdCell(AbstractSensor):
 
     def __init__(self, area):
-        AbstractSensor.__init__(self, "VodafoneSimplifiedCrowdCell")
+        AbstractSensor.__init__(self, "VodafoneSimplifiedCrowdCell-" + area)
         self.date_format = "%Y%m%d"
         self.dimensions = ["age", "gender", "nationality", "homeDistance", "country",
                            "workDistance", "region", "municipality", "province"]
@@ -47,10 +47,10 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
 
     def phase_1(self):
         # phase 1 begin
-        self.logger.debug(self.sensor_name + self.area, "Inizio fase 1")
+        self.logger.info(self.sensor_name, "Inizio fase 1")
         # generate url
         request_url = "https://{}/api/auth/login".format(self.configurations["host"])
-        self.logger.debug(self.sensor_name + self.area, "Invio richiesta a: {}".format(request_url))
+        self.logger.info(self.sensor_name, "Invio richiesta a: {}".format(request_url))
         # generate request
         response = requests.post(url=request_url, json={
             "username": self.configurations["username"],
@@ -58,8 +58,8 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
         })
         # check response
         if response.status_code == 200:
-            self.logger.debug(
-                self.sensor_name, "Risposta ricevuta con successo".format(response.status_code)
+            self.logger.info(
+                self.sensor_name, "Risposta ricevuta con successo: {}".format(response.status_code)
             )
         else:
             raise ConnectionError("Risposta ricevuta con errore. Codice: {}. Messaggio: {}".format(
@@ -76,11 +76,11 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
 
     def phase_2(self, thingsboard_token):
         # phase 2 begin
-        self.logger.debug(self.sensor_name + self.area, "Inizio fase 2")
+        self.logger.info(self.sensor_name, "Inizio fase 2")
         # generate url
         request_url = "https://{}/api/plugins/telemetry/DEVICE/{}/values/timeseries" \
             .format(self.configurations["host"], self.device_id)
-        self.logger.debug(self.sensor_name + self.area, "Invio richiesta a: {}".format(request_url))
+        self.logger.info(self.sensor_name, "Invio richiesta a: {}".format(request_url))
         # generate request
         response = requests.get(
             url=request_url,
@@ -93,8 +93,8 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
         )
         # check response
         if response.status_code == 200:
-            self.logger.debug(
-                self.sensor_name, "Risposta ricevuta con successo".format(response.status_code)
+            self.logger.info(
+                self.sensor_name, "Risposta ricevuta con successo {}".format(response.status_code)
             )
         else:
             raise ConnectionError("Risposta ricevuta con errore. Codice: {}. Messaggio: {}".format(
@@ -103,10 +103,10 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
         # dispatch
         json_response = response.json()
         if "visite" in json_response and json_response["visite"][0]["value"] is not None:
-            self.logger.debug(self.sensor_name + self.area, "Ci sono dati. Inizio dal giorno successivo")
+            self.logger.info(self.sensor_name, "Ci sono dati. Inizio dal giorno successivo")
             return datetime.fromtimestamp(json_response["visite"][0]["ts"] / 1000) + timedelta(days=1)
         else:  # days_back giorni prima
-            self.logger.debug(
+            self.logger.info(
                 self.sensor_name,
                 "Non ci sono dati. Inizierò da {} giorni prima".format(self.configurations["days_back"])
             )
@@ -114,10 +114,10 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
 
     def phase_3(self):
         # phase 3 begin
-        self.logger.debug(self.sensor_name + self.area, "Inizio fase 3")
+        self.logger.info(self.sensor_name, "Inizio fase 3")
         # generate url
         request_url = "{}/userbackend/login".format(self.configurations["base_url"])
-        self.logger.debug(self.sensor_name + self.area, "Invio richiesta a: {}".format(request_url))
+        self.logger.info(self.sensor_name, "Invio richiesta a: {}".format(request_url))
         # generate request
         response = requests.post(
             url=request_url,
@@ -128,9 +128,9 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
         )
         # check response
         if response.status_code == 200:
-            self.logger.debug(
+            self.logger.info(
                 self.sensor_name,
-                "Risposta ricevuta con successo".format(response.status_code)
+                "Risposta ricevuta con successo {}".format(response.status_code)
             )
         else:
             raise ConnectionError("Risposta ricevuta con errore. Codice: {}. Messaggio: {}".format(
@@ -147,10 +147,10 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
 
     def phase_4(self, vodafone_token):
         # phase 4 begin
-        self.logger.debug(self.sensor_name + self.area, "Inizio fase 4")
+        self.logger.info(self.sensor_name, "Inizio fase 4")
         # generate url
         request_url = "{}/retail/stores".format(self.configurations["base_url"])
-        self.logger.debug(self.sensor_name + self.area, "Invio richiesta a: {}".format(request_url))
+        self.logger.info(self.sensor_name, "Invio richiesta a: {}".format(request_url))
         # generate request
         response = requests.post(
             url=request_url,
@@ -160,7 +160,7 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
         )
         # check response
         if response.status_code == 200:
-            self.logger.debug(
+            self.logger.info(
                 self.sensor_name, "Risposta ricevuta con successo".format(response.status_code)
             )
         else:
@@ -178,13 +178,13 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
 
     def phase_5(self, vodafone_token, pdv_id, timestamp):
         # phase 5 begin
-        self.logger.debug(self.sensor_name + self.area, "Inizio fase 5")
+        self.logger.info(self.sensor_name, "Inizio fase 5")
         # generate url
         request_url = "{}/retail/daily".format(self.configurations["base_url"])
         # for every day
         while True:
             # log
-            self.logger.debug(
+            self.logger.info(
                 self.sensor_name, "Verifico la presenza di dati {} per la data {}".format(self.area, timestamp)
             )
             # delta seconds
@@ -206,7 +206,7 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
             )
             # check response
             if response.status_code == 200:
-                self.logger.debug(self.sensor_name + self.area, "Risposta ricevuta con successo")
+                self.logger.info(self.sensor_name, "Risposta ricevuta con successo")
             else:
                 raise ConnectionError("Risposta ricevuta con errore. Codice: {}. Messaggio: {}".format(
                     response.status_code, response.text
@@ -214,10 +214,10 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
             # dispatch
             json_response = response.json()
             if json_response["pages"] == 0:
-                self.logger.debug(self.sensor_name + self.area, "Non sembrano esserci dati")
+                self.logger.info(self.sensor_name, "Non sembrano esserci dati")
                 if timestamp < datetime.now():
                     timestamp += timedelta(days=1)
-                    self.logger.debug(self.sensor_name + self.area, "Passo al giorno successivo")
+                    self.logger.info(self.sensor_name, "Passo al giorno successivo")
                     continue
                 else:
                     break
@@ -233,6 +233,7 @@ class VodafoneSimplifiedCrowdCell(AbstractSensor):
                 if data["visitors"] == "*":
                     data["visitors"] = data["visits"]
                 # remove useless data
+                data.pop("area")
                 data.pop("date")
                 data.pop("pdvId")
                 data.pop("pdvName")
